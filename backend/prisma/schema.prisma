@@ -21,11 +21,12 @@ model User{
 
 model Task{
   id          Int       @id @default(autoincrement())
-  title       String?    @default("Select the most clickable thumbnail")
+  title       String?   @default("Select the most clickable thumbnail")
   options     Option[]
   user_id     Int
   signature   String
-  amount      String
+  done        Boolean   @default(false)
+  amount      Int
   user        User      @relation(fields: [user_id], references: [id])
   submission  Submission[]
 }
@@ -42,9 +43,9 @@ model Worker{
   id          Int      @id @default(autoincrement())
   address     String   @unique
   submissions Submission[]
-  balance_id  Int
-  pending_amt Int
-  locked_amt  Int
+  pending_amt Int      // amount in lamports 10^6
+  locked_amt  Int      // amount in lamports 10^6
+  payouts Payouts[]
 }
 
 model Submission{
@@ -55,5 +56,21 @@ model Submission{
   option      Option @relation(fields: [option_id], references: [id])
   task_id     Int
   task        Task   @relation(fields: [task_id], references: [id])
-  amount      String 
+  amount      Int 
+  @@unique([worker_id, task_id])
+}
+
+model Payouts {
+  id            Int     @id @default(autoincrement())
+  worker_id     Int
+  worker        Worker    @relation(fields: [worker_id], references: [id])
+  amount        Int
+  signature     String
+  status        TxnStatus
+}
+
+enum TxnStatus {
+  Processing
+  Success
+  Failure
 }

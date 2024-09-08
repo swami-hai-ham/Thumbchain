@@ -1,13 +1,14 @@
 import { PrismaClient } from "@prisma/client";
 import { Router } from "express";
 import jwt from "jsonwebtoken";
-import { authMiddleware } from "../middleware";
+import { userMiddleware } from "../middlewares/userMiddleware";
 import { createTaskInput } from "../types";
 
 const userRouter = Router();
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET as string;
 const DEFAULT_TITLE = "Select the most clickable thumbnail."
+const TOTAL_DECIMALS = Number(process.env.TOTAL_DECIMALS) || 1000_000;
 
 // signin with wallet
 userRouter.post("/signin", async (req, res) => {
@@ -36,7 +37,7 @@ userRouter.post("/signin", async (req, res) => {
 
 })
 
-userRouter.post('/task', authMiddleware, async (req, res) => {
+userRouter.post('/task', userMiddleware, async (req, res) => {
     const body = req.body;
     const id = res.locals.userId;
 
@@ -50,10 +51,11 @@ userRouter.post('/task', authMiddleware, async (req, res) => {
 
     // TASK : PARSE AND VERIFY SIGNATURE
     let response = await prisma.$transaction(async tx => {
+        console.log(TOTAL_DECIMALS)
         const response = await tx.task.create({
             data: {
                 title: parsedData.data.title,
-                amount: "1",
+                amount: 1 * TOTAL_DECIMALS, // lamports
                 signature: parsedData.data.signature,
                 user_id: id
             }
@@ -75,7 +77,7 @@ userRouter.post('/task', authMiddleware, async (req, res) => {
 })
 
 
-userRouter.get('/task/:taskId', authMiddleware, async (req, res) => {
+userRouter.get('/task/:taskId', userMiddleware, async (req, res) => {
     const userId = res.locals.userId;
     const taskId = req.params.taskId;
 
@@ -91,16 +93,6 @@ userRouter.get('/task/:taskId', authMiddleware, async (req, res) => {
             message: "You do not have access to this task"
         })
     }
-
-    const submissionCounts = await prisma.submission.groupBy({
-        by: ['option_id'],
-        where: {
-            task_id: Number(taskId)
-        },
-        _count: {
-            id: true, // Count the number of submissions per option
-        }
-    });
     
     const results = await prisma.option.findMany({
         where: {

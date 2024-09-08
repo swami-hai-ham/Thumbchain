@@ -15,12 +15,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const client_1 = require("@prisma/client");
 const express_1 = require("express");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const middleware_1 = require("../middleware");
+const userMiddleware_1 = require("../middlewares/userMiddleware");
 const types_1 = require("../types");
 const userRouter = (0, express_1.Router)();
 const prisma = new client_1.PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET;
 const DEFAULT_TITLE = "Select the most clickable thumbnail.";
+const TOTAL_DECIMALS = Number(process.env.TOTAL_DECIMALS) || 1000000;
 // signin with wallet
 userRouter.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     // Todo: add sign verification logic here
@@ -46,7 +47,7 @@ userRouter.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, funct
         });
     }
 }));
-userRouter.post('/task', middleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+userRouter.post('/task', userMiddleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const body = req.body;
     const id = res.locals.userId;
     const parsedData = types_1.createTaskInput.safeParse(body);
@@ -57,10 +58,11 @@ userRouter.post('/task', middleware_1.authMiddleware, (req, res) => __awaiter(vo
     }
     // TASK : PARSE AND VERIFY SIGNATURE
     let response = yield prisma.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
+        console.log(TOTAL_DECIMALS);
         const response = yield tx.task.create({
             data: {
                 title: parsedData.data.title,
-                amount: "1",
+                amount: 1 * TOTAL_DECIMALS, // lamports
                 signature: parsedData.data.signature,
                 user_id: id
             }
@@ -77,7 +79,7 @@ userRouter.post('/task', middleware_1.authMiddleware, (req, res) => __awaiter(vo
         id: response.id
     });
 }));
-userRouter.get('/task/:taskId', middleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+userRouter.get('/task/:taskId', userMiddleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = res.locals.userId;
     const taskId = req.params.taskId;
     const taskDetails = yield prisma.task.findFirst({
@@ -91,15 +93,6 @@ userRouter.get('/task/:taskId', middleware_1.authMiddleware, (req, res) => __awa
             message: "You do not have access to this task"
         });
     }
-    const submissionCounts = yield prisma.submission.groupBy({
-        by: ['option_id'],
-        where: {
-            task_id: Number(taskId)
-        },
-        _count: {
-            id: true, // Count the number of submissions per option
-        }
-    });
     const results = yield prisma.option.findMany({
         where: {
             task_id: Number(taskId)
