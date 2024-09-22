@@ -1,3 +1,59 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+    --background: #1A1A1A; /* Dark Charcoal */
+    --foreground: #F0F0F0; /* Light Gray */
+    
+    --card: #2A2A2A; /* Slightly lighter charcoal for card background */
+    --card-foreground: #F0F0F0; /* Light Gray for text on cards */
+    
+    --popover: #1F1F1F; /* Dark tone for popover background */
+    --popover-foreground: #E5E5E5; /* Slightly lighter gray for text on popovers */
+    
+    --primary: #007BFF; /* Electric Blue */
+    --primary-foreground: #FFFFFF; /* White text on primary buttons */
+    
+    --secondary: #00FF85; /* Neon Green */
+    --secondary-foreground: #FFFFFF; /* White for secondary button text */
+    
+    --muted: #999999; /* Cool Gray */
+    --muted-foreground: #F0F0F0; /* Light Gray for muted elements */
+    
+    --accent: #FF5722; /* Bright Orange */
+    --accent-foreground: #FFFFFF; /* White text on accent elements */
+    
+    --destructive: #FF0000; /* Red for destructive actions */
+    --destructive-foreground: #FFFFFF; /* White text on destructive actions */
+    
+    --border: #4D4D4D; /* Dark gray for borders */
+    --input: #333333; /* Input background */
+    --ring: #00AFFF; /* Electric Blue for focus rings */
+    
+    --chart-1: #007BFF; /* Electric Blue */
+    --chart-2: #00FF85; /* Neon Green */
+    --chart-3: #FF5722; /* Bright Orange */
+    --chart-4: #FF0000; /* Red */
+    --chart-5: #FFDD57; /* Yellow */
+
+    --radial-gradient: radial-gradient(ellipse at center, rgba(0, 255, 133, 0.2) 0%, transparent 60%);
+  }
+  .glowy-gradient {
+    position: relative;
+    z-index: 1;
+  }
+  
+  .glowy-gradient::before {
+    content: "";
+    position: absolute;
+    top: -10px; /* Adjust position as needed */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100vw;
+    height: 100px; /* Adjust height for the size of the glow */
+    background: radial-gradient(circle, rgba(0, 255, 133, 0.4), transparent 60%);
+    z-index: -1; /* Make sure it stays behind the header */
+    filter: blur(30px); /* Adjust blur for the glow effect */
+  }
+  

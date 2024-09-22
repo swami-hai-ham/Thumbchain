@@ -1,8 +1,10 @@
 import express from "express";
 import userRouter from './routes/user'
 import workerRouter from './routes/worker'
+import cors from 'cors';
 
 const app = express();
+app.use(cors());
 
 app.use(express.json())
 
