@@ -1,5 +1,7 @@
+import SideNav from '@/components/SideNav'
 import UploadImage from '@/components/UploadImage'
 import React from 'react'
+
 
 type Props = {}
 
