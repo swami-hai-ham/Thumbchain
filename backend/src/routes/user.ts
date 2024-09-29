@@ -7,7 +7,7 @@ import { createTaskInput } from "../types";
 const userRouter = Router();
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET as string;
-const DEFAULT_TITLE = "Select the most clickable thumbnail."
+const DEFAULT_TITLE = "Select the most appealing thumbnail."
 const TOTAL_DECIMALS = Number(process.env.TOTAL_DECIMALS) || 1000_000;
 
 // signin with wallet
@@ -76,24 +76,55 @@ userRouter.post('/task', userMiddleware, async (req, res) => {
     })
 })
 
+userRouter.get('/task/bulk', userMiddleware, async (req, res) => {
+    const userId = res.locals.userId;
 
+    // Fetch all tasks for the user
+    const allTasks = await prisma.task.findMany({
+        where: {
+            user_id: userId
+        },
+        include: {
+            options: {
+                include: {
+                    _count: {
+                        select: {
+                            submissions: true
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    return res.status(200).json(allTasks);
+});
+
+// Handler for fetching a single task by taskId
 userRouter.get('/task/:taskId', userMiddleware, async (req, res) => {
     const userId = res.locals.userId;
     const taskId = req.params.taskId;
 
+    // Check if taskId is a valid number
+    if (isNaN(Number(taskId))) {
+        return res.status(400).json({
+            message: "Invalid taskId provided"
+        });
+    }
+    
     const taskDetails = await prisma.task.findFirst({
         where: {
             id: Number(taskId),
             user_id: userId
         }
-    })
+    });
 
-    if(!taskDetails){
+    if (!taskDetails) {
         return res.status(411).json({
             message: "You do not have access to this task"
-        })
+        });
     }
-    
+
     const results = await prisma.option.findMany({
         where: {
             task_id: Number(taskId)
@@ -106,9 +137,10 @@ userRouter.get('/task/:taskId', userMiddleware, async (req, res) => {
             }
         }
     });
-    
+
     return res.status(200).json(results);
-    
-})
+});
+
+
 
 export default userRouter;

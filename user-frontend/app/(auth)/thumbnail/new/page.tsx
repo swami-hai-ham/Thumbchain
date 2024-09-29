@@ -7,8 +7,7 @@ type Props = {}
 
 const page = (props: Props) => {
   return (
-    <div className='flex justify-start items-center w-full h-screen flex-col'>
-      <h3 className='text-3xl text-foreground font-poppins font-bold m-6'>Upload More than 1 Thumbnail</h3>
+    <div className='relative flex h-full w-full justify-start items-center flex-col border-border border-l-2'>
       <UploadImage />
     </div>
   )

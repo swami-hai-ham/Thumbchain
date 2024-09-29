@@ -13,7 +13,7 @@ const SideNav = (props: Props) => {
     },
     {scope: navRef})
     return (
-        <div className='h-screen w-1/4 border-border border-r-2 flex justify-center items-start flex-col gap-12 ml-28' ref={navRef}>
+        <div className='h-screen w-1/4 flex justify-center items-start flex-col gap-12 ml-28' ref={navRef}>
             <Link href={'/'} className='flex justify-center items-center gap-6 sideNavLink opacity-0'>
             <img src="/home-line.svg" alt="" />
             <span className='text-foreground font-poppins text-xl'>Home</span>

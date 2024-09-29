@@ -20,7 +20,7 @@ const types_1 = require("../types");
 const userRouter = (0, express_1.Router)();
 const prisma = new client_1.PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET;
-const DEFAULT_TITLE = "Select the most clickable thumbnail.";
+const DEFAULT_TITLE = "Select the most appealing thumbnail.";
 const TOTAL_DECIMALS = Number(process.env.TOTAL_DECIMALS) || 1000000;
 // signin with wallet
 userRouter.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -79,9 +79,37 @@ userRouter.post('/task', userMiddleware_1.userMiddleware, (req, res) => __awaite
         id: response.id
     });
 }));
+userRouter.get('/task/bulk', userMiddleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = res.locals.userId;
+    // Fetch all tasks for the user
+    const allTasks = yield prisma.task.findMany({
+        where: {
+            user_id: userId
+        },
+        include: {
+            options: {
+                include: {
+                    _count: {
+                        select: {
+                            submissions: true
+                        }
+                    }
+                }
+            }
+        }
+    });
+    return res.status(200).json(allTasks);
+}));
+// Handler for fetching a single task by taskId
 userRouter.get('/task/:taskId', userMiddleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = res.locals.userId;
     const taskId = req.params.taskId;
+    // Check if taskId is a valid number
+    if (isNaN(Number(taskId))) {
+        return res.status(400).json({
+            message: "Invalid taskId provided"
+        });
+    }
     const taskDetails = yield prisma.task.findFirst({
         where: {
             id: Number(taskId),

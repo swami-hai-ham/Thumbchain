@@ -62,7 +62,9 @@ export default function RootLayout({
       </head>
       <body className="bg-background w-full h-full">
         <RecoilContextProvider>
+        <main>
         {children}
+        </main>
         </RecoilContextProvider>
         </body>
     </html>
