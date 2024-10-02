@@ -3,7 +3,6 @@ import RetroGrid from "@/components/magicui/retro-grid";
 import React, { useEffect, useRef } from 'react'
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
-import { useRecoilState } from "recoil";
 import NavBar from "@/components/NavBar";
 import SplitType from "split-type";
 
@@ -70,7 +69,7 @@ const page = (props: Props) => {
   
   return (
     <div className='w-full h-screen flex justify-center items-center overflow-hidden flex-col' ref={divRef}>
-      <NavBar tl={timeline}/>
+      <NavBar/>
       <div className="w-30 h-32 text-foreground text-6xl text-ex mt-60 z-30 flex flex-wrap hero-title opacity-0">Are hasenge log, kahenge LOL XD</div>
       <div className="w-full h-screen flex justify-center items-center overflow-hidden">
       <img src="/yt.svg" alt="" className='absolute h-24 w-24 yt opacity-0'/>

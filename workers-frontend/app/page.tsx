@@ -1,113 +1,89 @@
-import Image from "next/image";
+"use client"
+import RetroGrid from "@/components/ui/retro-grid";
+import React, { useEffect, useRef } from 'react'
+import { gsap } from "gsap";
+import { useGSAP } from "@gsap/react";
+import NavBar from "@/components/NavBar";
+import SplitType from "split-type";
 
-export default function Home() {
+
+gsap.registerPlugin(useGSAP);
+type Props = {}
+
+const page = (props: Props) => {
+  const divRef = useRef<HTMLDivElement | null>(null)
+  const timeline = gsap.timeline()
+  useGSAP(() => {
+    const q = gsap.utils.selector(divRef);
+    
+    // Set initial states using autoAlpha
+    gsap.set(q('.yt'), { rotate: -30, autoAlpha: 1, x: -200, y: -200 });
+    gsap.set(q('.ctr'), { rotate: 30, autoAlpha: 1, x: 250, y: -150 });
+    gsap.set(q('.survey'), { rotate: -10, autoAlpha: 1, x: -100, y: -50 });
+    gsap.set(q('.op'), { rotate: -25, autoAlpha: 1, x: 150, y: -30 });
+    gsap.set(q('.like'), { rotate: -25, autoAlpha: 1, x: -30, y: -300 });
+    gsap.set(q('.graph'), { rotate: 20, autoAlpha: 1, x: 70, y: -170 });
+    
+    timeline
+      .to(divRef.current, {
+        duration: 0.4,
+        backgroundImage: "radial-gradient(ellipse at center, rgba(0, 255, 133, 0.3) 0%, transparent 60%)",
+      })
+      .from(divRef.current, {
+        duration: 0.1,
+        backgroundImage: "radial-gradient(ellipse at center, rgba(0, 255, 133, 0.2) 0%, transparent 60%)",
+      })
+      .to(divRef.current, {
+        duration: 0.1,
+        backgroundImage: "radial-gradient(ellipse at center, rgba(0, 255, 133, 0.2) 0%, transparent 60%)",
+        repeat: 3,
+        yoyo: true, // To make it blink
+      })
+      .to(divRef.current, {
+        duration: 0.6,
+        backgroundImage: "radial-gradient(ellipse at center, rgba(0, 255, 133, 0.2 ) 0%, transparent 60%)",
+        delay: 0.2, // Delay before final background
+      })
+      .to(q('.retro'), { filter: "blur(0px)", duration: 1, autoAlpha: 1 }, '-=1');
+    
+    const splitText = new SplitType(q('.hero-title'), { types: 'lines,words,chars' });
+
+    const chars = splitText.chars; // Array of individual characters
+    const midIndex = Math.floor(chars!.length / 2);
+    console.log(chars) // Keep only non-space characters
+    gsap.fromTo([q('.hero-title')],{autoAlpha: 0}, {autoAlpha: 1, duration: 0.1})
+    gsap.fromTo(chars, 
+      { autoAlpha: 0, filter: "blur(15px)"}, 
+      {
+        autoAlpha: 1,
+        filter: "blur(0px)",
+        duration: 0.3,
+        delay: 1,
+        ease: "power2.out",
+        stagger: {
+          each: 0.02,
+          from: midIndex, // Start the animation from the center character
+        },
+      });
+  });
+  
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
+    <div className=' w-full h-screen flex justify-center items-center overflow-hidden flex-col' ref={divRef}>
+      <NavBar />
+      <div className="w-30 h-32 text-foreground text-6xl text-ex mt-60 z-30 flex flex-wrap hero-title opacity-0">Are hasenge log, kahenge LOL XD</div>
+      <div className="w-full h-screen flex justify-center items-center overflow-hidden">
+      <img src="/yt.svg" alt="" className='absolute h-24 w-24 yt opacity-0'/>
+      <img src="/ctr.svg" alt="" className='absolute h-24 w-24 ctr opacity-0 '/>
+      <img src="/survey.svg" alt="" className='absolute h-48 w-48 survey opacity-0'/>
+      <img src="/opinion.svg" alt="" className='absolute h-48 w-48 op'/>
+      <img src="/graph.svg" alt="" className='absolute h-36 w-36 graph'/>
+      <img src="/like.svg" alt="" className='absolute h-20 w-20 like'/>
+      <div className="size-full retro absolute top-0 blur-3xl -z-40" >
+      <RetroGrid />
       </div>
-
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
       </div>
-
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  );
+    </div>
+  )
 }
+
+export default page
