@@ -5,7 +5,7 @@ const JWT_SECRET = process.env.JWT_SECRET as string;
 export function userMiddleware(req: Request, res: Response, next: NextFunction) {
     try {
         const token = req.headers.authorization?.split(" ")[1] || "";
-        console.log(token);
+        // console.log(token);
         
         const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;  // Type assertion
         

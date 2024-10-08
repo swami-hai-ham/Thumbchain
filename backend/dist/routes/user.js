@@ -20,7 +20,6 @@ const types_1 = require("../types");
 const userRouter = (0, express_1.Router)();
 const prisma = new client_1.PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET;
-const DEFAULT_TITLE = "Select the most appealing thumbnail.";
 const TOTAL_DECIMALS = Number(process.env.TOTAL_DECIMALS) || 1000000;
 // signin with wallet
 userRouter.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -37,12 +36,12 @@ userRouter.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, funct
             }
         });
         const token = jsonwebtoken_1.default.sign({ userId: user.id }, JWT_SECRET);
-        return res.json({
+        return res.status(200).json({
             token
         });
     }
     catch (e) {
-        return res.json({
+        return res.status(500).json({
             error: e
         });
     }
@@ -52,53 +51,66 @@ userRouter.post('/task', userMiddleware_1.userMiddleware, (req, res) => __awaite
     const id = res.locals.userId;
     const parsedData = types_1.createTaskInput.safeParse(body);
     if (!parsedData.success) {
-        return res.status(411).json({
-            messgae: "You've sent wrong inputs"
+        return res.status(400).json({
+            message: "You've sent wrong inputs"
         });
     }
-    // TASK : PARSE AND VERIFY SIGNATURE
-    let response = yield prisma.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
-        console.log(TOTAL_DECIMALS);
-        const response = yield tx.task.create({
-            data: {
-                title: parsedData.data.title,
-                amount: 1 * TOTAL_DECIMALS, // lamports
-                signature: parsedData.data.signature,
-                user_id: id
-            }
+    try {
+        // TASK : PARSE AND VERIFY SIGNATURE
+        let response = yield prisma.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
+            const response = yield tx.task.create({
+                data: {
+                    title: parsedData.data.title,
+                    amount: 1 * TOTAL_DECIMALS, // lamports
+                    signature: parsedData.data.signature,
+                    user_id: id
+                }
+            });
+            yield tx.option.createMany({
+                data: parsedData.data.options.map(x => ({
+                    image_url: x.imageUrl,
+                    task_id: response.id
+                }))
+            });
+            return response;
+        }));
+        return res.status(200).json({
+            id: response.id
         });
-        yield tx.option.createMany({
-            data: parsedData.data.options.map(x => ({
-                image_url: x.imageUrl,
-                task_id: response.id
-            }))
+    }
+    catch (e) {
+        return res.status(500).json({
+            error: e
         });
-        return response;
-    }));
-    return res.json({
-        id: response.id
-    });
+    }
 }));
 userRouter.get('/task/bulk', userMiddleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = res.locals.userId;
-    // Fetch all tasks for the user
-    const allTasks = yield prisma.task.findMany({
-        where: {
-            user_id: userId
-        },
-        include: {
-            options: {
-                include: {
-                    _count: {
-                        select: {
-                            submissions: true
+    try {
+        // Fetch all tasks for the user
+        const allTasks = yield prisma.task.findMany({
+            where: {
+                user_id: userId
+            },
+            include: {
+                options: {
+                    include: {
+                        _count: {
+                            select: {
+                                submissions: true
+                            }
                         }
                     }
                 }
             }
-        }
-    });
-    return res.status(200).json(allTasks);
+        });
+        return res.status(200).json(allTasks);
+    }
+    catch (e) {
+        return res.status(500).json({
+            error: e
+        });
+    }
 }));
 // Handler for fetching a single task by taskId
 userRouter.get('/task/:taskId', userMiddleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -110,29 +122,36 @@ userRouter.get('/task/:taskId', userMiddleware_1.userMiddleware, (req, res) => _
             message: "Invalid taskId provided"
         });
     }
-    const taskDetails = yield prisma.task.findFirst({
-        where: {
-            id: Number(taskId),
-            user_id: userId
-        }
-    });
-    if (!taskDetails) {
-        return res.status(411).json({
-            message: "You do not have access to this task"
+    try {
+        const taskDetails = yield prisma.task.findFirst({
+            where: {
+                id: Number(taskId),
+                user_id: userId
+            }
         });
-    }
-    const results = yield prisma.option.findMany({
-        where: {
-            task_id: Number(taskId)
-        },
-        include: {
-            _count: {
-                select: {
-                    submissions: true
+        if (!taskDetails) {
+            return res.status(403).json({
+                message: "You do not have access to this task"
+            });
+        }
+        const results = yield prisma.option.findMany({
+            where: {
+                task_id: Number(taskId)
+            },
+            include: {
+                _count: {
+                    select: {
+                        submissions: true
+                    }
                 }
             }
-        }
-    });
-    return res.status(200).json(results);
+        });
+        return res.status(200).json(results);
+    }
+    catch (e) {
+        return res.status(500).json({
+            error: e
+        });
+    }
 }));
 exports.default = userRouter;

@@ -7,7 +7,6 @@ import { createTaskInput } from "../types";
 const userRouter = Router();
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET as string;
-const DEFAULT_TITLE = "Select the most appealing thumbnail."
 const TOTAL_DECIMALS = Number(process.env.TOTAL_DECIMALS) || 1000_000;
 
 // signin with wallet
@@ -25,11 +24,11 @@ userRouter.post("/signin", async (req, res) => {
         }
     })
     const token = jwt.sign({userId: user.id}, JWT_SECRET)
-    return res.json({
+    return res.status(200).json({
         token
     })
     }catch(e){
-        return res.json({
+        return res.status(500).json({
             error: e
         })
     }
@@ -43,61 +42,73 @@ userRouter.post('/task', userMiddleware, async (req, res) => {
 
     const parsedData = createTaskInput.safeParse(body);
 
-    if(!parsedData.success){
-        return res.status(411).json({
-            messgae: "You've sent wrong inputs"
-        })
+    if (!parsedData.success) {
+        return res.status(400).json({
+            message: "You've sent wrong inputs"
+        });
     }
 
-    // TASK : PARSE AND VERIFY SIGNATURE
-    let response = await prisma.$transaction(async tx => {
-        console.log(TOTAL_DECIMALS)
-        const response = await tx.task.create({
-            data: {
-                title: parsedData.data.title,
-                amount: 1 * TOTAL_DECIMALS, // lamports
-                signature: parsedData.data.signature,
-                user_id: id
-            }
-        })
+    try {
+        // TASK : PARSE AND VERIFY SIGNATURE
+        let response = await prisma.$transaction(async tx => {
+            const response = await tx.task.create({
+                data: {
+                    title: parsedData.data.title,
+                    amount: 1 * TOTAL_DECIMALS, // lamports
+                    signature: parsedData.data.signature,
+                    user_id: id
+                }
+            });
 
-        await tx.option.createMany({
-            data: parsedData.data.options.map(x => ({
-                image_url: x.imageUrl,
-                task_id: response.id
-            }))
-        })
+            await tx.option.createMany({
+                data: parsedData.data.options.map(x => ({
+                    image_url: x.imageUrl,
+                    task_id: response.id
+                }))
+            });
 
-        return response;
-    })
+            return response;
+        });
 
-    return res.json({
-        id: response.id
-    })
-})
+        return res.status(200).json({
+            id: response.id
+        });
+    } catch (e) {
+        return res.status(500).json({
+            error: e
+        });
+    }
+});
+
 
 userRouter.get('/task/bulk', userMiddleware, async (req, res) => {
     const userId = res.locals.userId;
 
-    // Fetch all tasks for the user
-    const allTasks = await prisma.task.findMany({
-        where: {
-            user_id: userId
-        },
-        include: {
-            options: {
-                include: {
-                    _count: {
-                        select: {
-                            submissions: true
+    try {
+        // Fetch all tasks for the user
+        const allTasks = await prisma.task.findMany({
+            where: {
+                user_id: userId
+            },
+            include: {
+                options: {
+                    include: {
+                        _count: {
+                            select: {
+                                submissions: true
+                            }
                         }
                     }
                 }
             }
-        }
-    });
+        });
 
-    return res.status(200).json(allTasks);
+        return res.status(200).json(allTasks);
+    } catch (e) {
+        return res.status(500).json({
+            error: e
+        });
+    }
 });
 
 // Handler for fetching a single task by taskId
@@ -111,36 +122,41 @@ userRouter.get('/task/:taskId', userMiddleware, async (req, res) => {
             message: "Invalid taskId provided"
         });
     }
-    
-    const taskDetails = await prisma.task.findFirst({
-        where: {
-            id: Number(taskId),
-            user_id: userId
-        }
-    });
 
-    if (!taskDetails) {
-        return res.status(411).json({
-            message: "You do not have access to this task"
+    try {
+        const taskDetails = await prisma.task.findFirst({
+            where: {
+                id: Number(taskId),
+                user_id: userId
+            }
         });
-    }
 
-    const results = await prisma.option.findMany({
-        where: {
-            task_id: Number(taskId)
-        },
-        include: {
-            _count: {
-                select: {
-                    submissions: true
+        if (!taskDetails) {
+            return res.status(403).json({
+                message: "You do not have access to this task"
+            });
+        }
+
+        const results = await prisma.option.findMany({
+            where: {
+                task_id: Number(taskId)
+            },
+            include: {
+                _count: {
+                    select: {
+                        submissions: true
+                    }
                 }
             }
-        }
-    });
+        });
 
-    return res.status(200).json(results);
+        return res.status(200).json(results);
+    } catch (e) {
+        return res.status(500).json({
+            error: e
+        });
+    }
 });
-
 
 
 export default userRouter;

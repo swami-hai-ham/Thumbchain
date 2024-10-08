@@ -24,6 +24,7 @@ model Task{
   title       String?   @default("Select the most clickable thumbnail")
   options     Option[]
   user_id     Int
+  country     String?
   signature   String
   done        Boolean   @default(false)
   amount      Int

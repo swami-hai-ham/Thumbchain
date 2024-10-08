@@ -27,40 +27,53 @@ workerRouter.post("/signin", async (req, res) => {
         }
     })
     const token = jwt.sign({workerId: worker.id}, JWT_SECRET)
-    return res.json({
+    return res.status(200).json({
         token
     })
     }catch(e){
-        return res.json({
+        return res.status(500).json({
             error: e
         })
     }
 })
 
 workerRouter.get('/nexttask', workerMiddleware, async (req, res) => {
-    const workerId = res.locals.workerId;
-    console.log(workerId)
-    const task = await getNextTask(Number(workerId))
+    
+    try{
+        const workerId = Number(res.locals.workerId);
+        const country = req.query.country ? String(req.query.country) : undefined;
 
-    if(!task){
-        return res.status(200).json({
-            msg: "There are no tasks left for you to review"
-        })
-    }else{
-        return res.status(200).json({
-            task
+        console.log(workerId)
+        const task = await getNextTask({workerId, country})
+
+        if(!task){
+            return res.status(404).json({
+                msg: "There are no tasks left for you to review"
+            })
+        }else{
+            return res.status(200).json({
+                task
+            })
+        }
+    }catch(e){
+        return res.status(500).json({
+            e
         })
     }
 })
 
 workerRouter.post('/submission', workerMiddleware, async (req, res) => {
-    const workerId = res.locals.workerId;
+    try{
+    const workerId = Number(res.locals.workerId);
     const body = req.body;
     const parsedBody = createSubmissionInput.safeParse(body);
+    const country = req.query.country ? String(req.query.country) : undefined;
 
     if(parsedBody.success){
-        const task = await getNextTask(Number(workerId));
+        console.log(workerId)
+        const task = await getNextTask({workerId, country});
         if(!task || task?.id !== Number(parsedBody.data.taskId)){
+            console.log(task, parsedBody.data)
             return res.json({
                 msg: "Incorrect Task Id"
             })
@@ -93,13 +106,26 @@ workerRouter.post('/submission', workerMiddleware, async (req, res) => {
         })
         
 
-        const nextTask = await getNextTask(workerId);
-        return res.json({
-            nextTask,
-            amount
-        })
+        const nextTask = await getNextTask({workerId, country});
+        if(!nextTask){
+            return res.status(404).json({
+                msg: "There are no tasks left for you to review"
+            })
+        }else{
+            return res.status(200).json({
+                nextTask
+            })
+        }
     }else{
-
+        return res.status(400).json({
+            error : "Incorrect inputs"
+        })
+    }
+    }
+    catch(e){
+        return res.status(500).json({
+            e
+        })
     }
 })
 

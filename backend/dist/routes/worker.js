@@ -39,72 +39,99 @@ workerRouter.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, fun
             }
         });
         const token = jsonwebtoken_1.default.sign({ workerId: worker.id }, JWT_SECRET);
-        return res.json({
+        return res.status(200).json({
             token
         });
     }
     catch (e) {
-        return res.json({
+        return res.status(500).json({
             error: e
         });
     }
 }));
 workerRouter.get('/nexttask', workerMiddleware_1.workerMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const workerId = res.locals.workerId;
-    console.log(workerId);
-    const task = yield (0, db_1.getNextTask)(Number(workerId));
-    if (!task) {
-        return res.status(200).json({
-            msg: "There are no tasks left for you to review"
-        });
+    try {
+        const workerId = Number(res.locals.workerId);
+        const country = req.query.country ? String(req.query.country) : undefined;
+        console.log(workerId);
+        const task = yield (0, db_1.getNextTask)({ workerId, country });
+        if (!task) {
+            return res.status(404).json({
+                msg: "There are no tasks left for you to review"
+            });
+        }
+        else {
+            return res.status(200).json({
+                task
+            });
+        }
     }
-    else {
-        return res.status(200).json({
-            task
+    catch (e) {
+        return res.status(500).json({
+            e
         });
     }
 }));
 workerRouter.post('/submission', workerMiddleware_1.workerMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const workerId = res.locals.workerId;
-    const body = req.body;
-    const parsedBody = types_1.createSubmissionInput.safeParse(body);
-    if (parsedBody.success) {
-        const task = yield (0, db_1.getNextTask)(Number(workerId));
-        if (!task || (task === null || task === void 0 ? void 0 : task.id) !== Number(parsedBody.data.taskId)) {
-            return res.json({
-                msg: "Incorrect Task Id"
+    try {
+        const workerId = Number(res.locals.workerId);
+        const body = req.body;
+        const parsedBody = types_1.createSubmissionInput.safeParse(body);
+        const country = req.query.country ? String(req.query.country) : undefined;
+        if (parsedBody.success) {
+            console.log(workerId);
+            const task = yield (0, db_1.getNextTask)({ workerId, country });
+            if (!task || (task === null || task === void 0 ? void 0 : task.id) !== Number(parsedBody.data.taskId)) {
+                console.log(task, parsedBody.data);
+                return res.json({
+                    msg: "Incorrect Task Id"
+                });
+            }
+            const amount = task.amount / TOTAL_SUBMISSIONS;
+            console.log(amount);
+            const submission = yield prisma.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
+                const submission = yield tx.submission.create({
+                    data: {
+                        option_id: Number(parsedBody.data.selection),
+                        worker_id: workerId,
+                        task_id: Number(parsedBody.data.taskId),
+                        amount: amount
+                    }
+                });
+                yield tx.worker.update({
+                    where: {
+                        id: workerId
+                    },
+                    data: {
+                        pending_amt: {
+                            increment: Number(amount)
+                        }
+                    }
+                });
+                return submission;
+            }));
+            const nextTask = yield (0, db_1.getNextTask)({ workerId, country });
+            if (!nextTask) {
+                return res.status(404).json({
+                    msg: "There are no tasks left for you to review"
+                });
+            }
+            else {
+                return res.status(200).json({
+                    nextTask
+                });
+            }
+        }
+        else {
+            return res.status(400).json({
+                error: "Incorrect inputs"
             });
         }
-        const amount = task.amount / TOTAL_SUBMISSIONS;
-        console.log(amount);
-        const submission = yield prisma.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
-            const submission = yield tx.submission.create({
-                data: {
-                    option_id: Number(parsedBody.data.selection),
-                    worker_id: workerId,
-                    task_id: Number(parsedBody.data.taskId),
-                    amount: amount
-                }
-            });
-            yield tx.worker.update({
-                where: {
-                    id: workerId
-                },
-                data: {
-                    pending_amt: {
-                        increment: Number(amount)
-                    }
-                }
-            });
-            return submission;
-        }));
-        const nextTask = yield (0, db_1.getNextTask)(workerId);
-        return res.json({
-            nextTask,
-            amount
-        });
     }
-    else {
+    catch (e) {
+        return res.status(500).json({
+            e
+        });
     }
 }));
 workerRouter.get('/balance', workerMiddleware_1.workerMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {

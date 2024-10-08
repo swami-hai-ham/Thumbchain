@@ -12,23 +12,50 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getNextTask = void 0;
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
-const getNextTask = (workerId) => __awaiter(void 0, void 0, void 0, function* () {
-    const task = yield prisma.task.findFirst({
-        where: {
-            done: false,
-            submission: {
-                none: {
-                    worker_id: workerId
+const getNextTask = (_a) => __awaiter(void 0, [_a], void 0, function* ({ workerId, country }) {
+    console.log(workerId, country);
+    console.log(country);
+    if (country != undefined && country != "") {
+        console.log("here");
+        const task = yield prisma.task.findFirst({
+            where: {
+                done: false,
+                country: country,
+                submission: {
+                    none: {
+                        worker_id: workerId
+                    }
                 }
+            },
+            select: {
+                title: true,
+                options: true,
+                id: true,
+                amount: true
             }
-        },
-        select: {
-            title: true,
-            options: true,
-            id: true,
-            amount: true
-        }
-    });
-    return task;
+        });
+        return task;
+    }
+    else {
+        console.log("Here");
+        const task = yield prisma.task.findFirst({
+            where: {
+                country: null,
+                done: false,
+                submission: {
+                    none: {
+                        worker_id: workerId
+                    }
+                }
+            },
+            select: {
+                title: true,
+                options: true,
+                id: true,
+                amount: true
+            }
+        });
+        return task;
+    }
 });
 exports.getNextTask = getNextTask;
