@@ -13,49 +13,32 @@ exports.getNextTask = void 0;
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const getNextTask = (_a) => __awaiter(void 0, [_a], void 0, function* ({ workerId, country }) {
-    console.log(workerId, country);
-    console.log(country);
-    if (country != undefined && country != "") {
-        console.log("here");
-        const task = yield prisma.task.findFirst({
-            where: {
-                done: false,
-                country: country,
-                submission: {
-                    none: {
-                        worker_id: workerId
-                    }
-                }
-            },
-            select: {
-                title: true,
-                options: true,
-                id: true,
-                amount: true
+    console.log('Fetching next task for workerId:', workerId, 'and country:', country);
+    const whereCondition = {
+        country: null,
+        done: false,
+        submission: {
+            none: {
+                worker_id: workerId
             }
-        });
-        return task;
+        }
+    };
+    if (country) {
+        whereCondition.country = country;
     }
     else {
-        console.log("Here");
-        const task = yield prisma.task.findFirst({
-            where: {
-                country: null,
-                done: false,
-                submission: {
-                    none: {
-                        worker_id: workerId
-                    }
-                }
-            },
-            select: {
-                title: true,
-                options: true,
-                id: true,
-                amount: true
-            }
-        });
-        return task;
+        whereCondition.country = null; // Ensure you're looking for null if no country is provided
     }
+    const task = yield prisma.task.findFirst({
+        where: whereCondition,
+        select: {
+            title: true,
+            options: true,
+            id: true,
+            amount: true
+        }
+    });
+    console.log('Found task:', task);
+    return task;
 });
 exports.getNextTask = getNextTask;

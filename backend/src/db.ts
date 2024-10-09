@@ -5,51 +5,46 @@ interface getNextTaskType{
     country?: string | undefined
 }
 
+interface whereCondition{
+    country: string | null;
+    done: boolean;
+    submission: {
+        none: {
+            worker_id: number;
+        };
+    };
+}
+
 const prisma = new PrismaClient();
-export const getNextTask= async ({workerId, country}: getNextTaskType) => {
-    console.log(workerId, country);
-    console.log(country)
-    if(country != undefined && country != ""){
-        console.log("here")
-        const task = await prisma.task.findFirst({
-            where: {
-                done: false,
-                country: country,
-                submission:{
-                    none: {
-                        worker_id: workerId
-                    }
-                }
-            },
-            select: {
-                title: true,
-                options: true,
-                id: true,
-                amount: true
+export const getNextTask = async ({ workerId, country }: getNextTaskType) => {
+    console.log('Fetching next task for workerId:', workerId, 'and country:', country);
+    
+    const whereCondition: whereCondition = {
+        country: null,
+        done: false,
+        submission: {
+            none: {
+                worker_id: workerId
             }
-        })
-        return task;
-    }else{
-        console.log("Here")
-        const task = await prisma.task.findFirst({
-            where: {
-                country: null,
-                done: false,
-                submission:{
-                    none: {
-                        worker_id: workerId
-                    }
-                }
-            },
-            select: {
-                title: true,
-                options: true,
-                id: true,
-                amount: true
-            }
-        })
-        return task;
+        }
+    };
+
+    if (country) {
+        whereCondition.country = country;
+    } else {
+        whereCondition.country = null; // Ensure you're looking for null if no country is provided
     }
 
-    
+    const task = await prisma.task.findFirst({
+        where: whereCondition,
+        select: {
+            title: true,
+            options: true,
+            id: true,
+            amount: true
+        }
+    });
+
+    console.log('Found task:', task);
+    return task;
 }

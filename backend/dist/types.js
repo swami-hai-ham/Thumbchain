@@ -10,7 +10,8 @@ exports.createTaskInput = zod_1.default.object({
         imageUrl: zod_1.default.string()
     })),
     title: zod_1.default.string().optional(),
-    signature: zod_1.default.string()
+    signature: zod_1.default.string(),
+    country: zod_1.default.string().optional().nullable()
 });
 exports.createSubmissionInput = zod_1.default.object({
     taskId: zod_1.default.string(),

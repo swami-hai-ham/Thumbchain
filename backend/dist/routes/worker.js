@@ -81,9 +81,10 @@ workerRouter.post('/submission', workerMiddleware_1.workerMiddleware, (req, res)
         if (parsedBody.success) {
             console.log(workerId);
             const task = yield (0, db_1.getNextTask)({ workerId, country });
+            console.log(task);
             if (!task || (task === null || task === void 0 ? void 0 : task.id) !== Number(parsedBody.data.taskId)) {
                 console.log(task, parsedBody.data);
-                return res.json({
+                return res.status(400).json({
                     msg: "Incorrect Task Id"
                 });
             }
@@ -112,7 +113,7 @@ workerRouter.post('/submission', workerMiddleware_1.workerMiddleware, (req, res)
             }));
             const nextTask = yield (0, db_1.getNextTask)({ workerId, country });
             if (!nextTask) {
-                return res.status(404).json({
+                return res.status(200).json({
                     msg: "There are no tasks left for you to review"
                 });
             }

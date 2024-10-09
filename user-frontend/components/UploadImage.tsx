@@ -7,6 +7,8 @@ import { useToast } from "@/hooks/use-toast"
 import axios from 'axios'
 import { useRouter } from 'next/navigation'
 import Spinner from "./Spinner";
+import CountryDropdown from "./dropdown/countries";
+import { useDropdownStore } from "@/store/dropdown";
 
 
 
@@ -20,10 +22,12 @@ interface SubmitObject {
   options: { imageUrl: string }[];
   signature: string;
   title: string;
+  country: string | null;
 }
 
 const UploadImage: React.FC = () => {
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
+  const { countryValue } = useDropdownStore();
   const [disabled, setDisabled] = useState(false);
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState("")
@@ -35,13 +39,14 @@ const UploadImage: React.FC = () => {
   })
 
 
-  function convertLinksToObject(links: UploadedImage[], signature: string, title: string): SubmitObject {
+  function convertLinksToObject(links: UploadedImage[], signature: string, title: string, countryValue: string): SubmitObject {
     const options = links.map((link) => ({ imageUrl: link.url }));
     
     return {
       options,
       signature,
       title,
+      country: countryValue? countryValue : null
     };
   }
 
@@ -56,7 +61,7 @@ const UploadImage: React.FC = () => {
       })
     }else{
       setLoading(true)
-      const submitObj = convertLinksToObject(uploadedImages, "signature", title)
+      const submitObj = convertLinksToObject(uploadedImages, "signature", title, countryValue)
       console.log(submitObj)
       try{
       const {data} = await axios.post(burl, submitObj, {headers: {
@@ -125,10 +130,10 @@ const UploadImage: React.FC = () => {
   }, {dependencies: [uploadedImages], scope: divRef})
   useGSAP(() => {
     const q = gsap.utils.selector(divRef.current);
-    gsap.fromTo([q('.input'),q('.upload'), q('.submit')], {autoAlpha: 0}, {stagger: 0.2, autoAlpha: 1, duration: 0.5, ease: "power3.inOut"})
+    gsap.fromTo([q('.input'),q('.upload'), q('.country'), q('.submit')], {autoAlpha: 0}, {stagger: 0.2, autoAlpha: 1, duration: 0.5, ease: "power3.inOut"})
   }, {dependencies: [], scope: divRef})
   return (
-    <div className="size-full flex flex-col justify-start items-center overflow-visible" ref={divRef}>
+    <div className="size-full flex flex-col justify-start items-center overflow-visible text-foreground" ref={divRef}>
     <label htmlFor="input" className="opacity-0 input font-semibold font-poppins text-3xl text-foreground w-3/4 mt-10 flex justify-start items-center">Title</label>
     <input type="text" className="opacity-0 input bg-input w-3/4 h-20 m-10 p-10 text-2xl font-semibold font-poppins text-foreground" onChange={(e) => {setTitle(e.target.value)}} placeholder="Select the most appealing thumbnail."/>
     <div className="h-screen w-full flex flex-col justify-start items-center">
@@ -173,6 +178,7 @@ const UploadImage: React.FC = () => {
     </div>
     <div className="flex w-full h-10 justify-between items-center text-border font-semibold uppercase text-lg px-2"><span>Supported Formats: jpg, png, gif, jpeg, webp, bmp, svg</span><span className="flex justify-center items-center">maxfiles: 10</span></div>
     </div>
+    <div className="flex justify-center items-center gap-4 country opacity-0"><span>Select target country:</span> <CountryDropdown /> <span className="text-border">{"(optional)"}</span></div>
     <div className="flex justify-center items-start gap-4 max-w-full mx-5">
         {uploadedImages && uploadedImages.map((img: { url: string; width: number; height: number }, idx: number) => (
           <div key={idx} className="relative images">

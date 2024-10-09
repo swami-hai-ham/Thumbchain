@@ -56,7 +56,8 @@ userRouter.post('/task', userMiddleware, async (req, res) => {
                     title: parsedData.data.title,
                     amount: 1 * TOTAL_DECIMALS, // lamports
                     signature: parsedData.data.signature,
-                    user_id: id
+                    user_id: id,
+                    country: parsedData.data.country ? parsedData.data.country : null
                 }
             });
 

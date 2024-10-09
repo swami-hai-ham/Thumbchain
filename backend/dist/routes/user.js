@@ -63,7 +63,8 @@ userRouter.post('/task', userMiddleware_1.userMiddleware, (req, res) => __awaite
                     title: parsedData.data.title,
                     amount: 1 * TOTAL_DECIMALS, // lamports
                     signature: parsedData.data.signature,
-                    user_id: id
+                    user_id: id,
+                    country: parsedData.data.country ? parsedData.data.country : null
                 }
             });
             yield tx.option.createMany({

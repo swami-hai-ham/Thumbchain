@@ -62,7 +62,7 @@ const page = (props: Props) => {
         {
           headers: {
             Authorization:
-              "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3b3JrZXJJZCI6MTIsImlhdCI6MTcyODMxNjU4NX0.a8i_sY0zWQhpbXima5uFdt5osLb_4ZCHF57v2hTO9yI",
+              "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3b3JrZXJJZCI6MSwiaWF0IjoxNzI4NDc3OTM3fQ.DwzqnLk-hshw_FL9ZzhMV59mv_2969PJv-B0zibJ5To",
           },
         }
       );

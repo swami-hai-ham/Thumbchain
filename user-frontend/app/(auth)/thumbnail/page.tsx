@@ -30,6 +30,7 @@ interface TaskType {
   done: boolean;
   amount: number;
   options: OptionType[];
+  country: string;
 }
 
 
@@ -58,7 +59,10 @@ const page = (props: Props) => {
         title: task.title,
         status: task.done ? "Done" : "Pending",
         amount: task.amount,
-        result: `http://localhost:3000/thumbnail/task/${task.id}`
+        result: `http://localhost:3000/thumbnail/task/${task.id}`,
+        country: task.country 
+        ? task.country.charAt(0).toUpperCase() + task.country.slice(1).toLowerCase() 
+        : "None"
     }));
     setData(result)}catch(e:any){
       toast({

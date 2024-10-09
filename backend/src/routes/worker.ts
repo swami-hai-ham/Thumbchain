@@ -72,9 +72,10 @@ workerRouter.post('/submission', workerMiddleware, async (req, res) => {
     if(parsedBody.success){
         console.log(workerId)
         const task = await getNextTask({workerId, country});
+        console.log(task)
         if(!task || task?.id !== Number(parsedBody.data.taskId)){
             console.log(task, parsedBody.data)
-            return res.json({
+            return res.status(400).json({
                 msg: "Incorrect Task Id"
             })
         }
@@ -108,7 +109,7 @@ workerRouter.post('/submission', workerMiddleware, async (req, res) => {
 
         const nextTask = await getNextTask({workerId, country});
         if(!nextTask){
-            return res.status(404).json({
+            return res.status(200).json({
                 msg: "There are no tasks left for you to review"
             })
         }else{

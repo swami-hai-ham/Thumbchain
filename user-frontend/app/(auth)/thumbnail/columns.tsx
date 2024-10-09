@@ -10,7 +10,8 @@ export type Payment = {
   title: string;
   status: "Done" | "Pending";
   result: string;
-  amount: number
+  amount: number;
+  country: string;
 }
 
 
@@ -38,4 +39,9 @@ export const columns: ColumnDef<Payment>[] = [
       ),
       
     },
+    {
+      accessorKey: "country",
+      header: " Country",
+      enableSorting: true
+    }
   ];
