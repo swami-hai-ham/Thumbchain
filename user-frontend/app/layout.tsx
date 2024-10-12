@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Thumbchain",
@@ -14,8 +13,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
-  
   return (
     <html lang="en">
       <head>
@@ -62,7 +59,7 @@ export default function RootLayout({
       </head>
       <body className="bg-background w-full h-full">
         <main>
-        {children}
+          {children}     
         </main>
         </body>
     </html>

@@ -3,6 +3,7 @@ import React, { useRef, useState } from 'react'
 import Link from 'next/link'
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
+import CustomConnectButton from './CustomConnectButton';
 
 
 
@@ -19,7 +20,7 @@ const NavBar = () => {
 
     const tl = gsap.timeline();
     tl.set(navRef.current, {opacity: 10})
-    tl.from([q('a'), q('button')], {
+    tl.from([q('a'), q('.connect button')], {
       y: -100,
       opacity: 0,
       stagger: 0.2,
@@ -44,9 +45,9 @@ const NavBar = () => {
       <div className='flex items-center justify-center gap-20'>
       <Link href={'/thumbnail'} className='font-montserrat text-xl font-medium text-foreground hover:text-primary'>Thumbnail</Link>
       <Link href={'/survey'} className='font-montserrat text-xl font-medium text-foreground hover:text-primary'>Survey</Link>
-      <Link href={'/submissions'} className='font-montserrat text-xl font-medium text-foreground hover:text-primary'>Submissions</Link>
+      <Link href={'/tasks'} className='font-montserrat text-xl font-medium text-foreground hover:text-primary'>Tasks</Link>
       <Link href={'/payments'} className='font-montserrat text-xl font-medium text-foreground hover:text-primary'>Payments</Link>
-      <button className='font-bungee text-xl p-3 border-border border-2 rounded-xl hover:bg-popover'>Connect Wallet</button>
+      <CustomConnectButton />
       <img src="https://media.tenor.com/3EbQTgb3eqwAAAAi/petpet-transparent.gif"  alt="" className='rub opacity-0 absolute h-11 w-11 left-[30px] top-2 '/>
       </div>
     </div>

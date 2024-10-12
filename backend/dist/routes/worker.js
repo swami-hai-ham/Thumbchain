@@ -18,30 +18,57 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const workerMiddleware_1 = require("../middlewares/workerMiddleware");
 const db_1 = require("../db");
 const types_1 = require("../types");
+const web3_js_1 = require("@solana/web3.js");
+const bs58_1 = __importDefault(require("bs58"));
+const tweetnacl_1 = __importDefault(require("tweetnacl"));
+const types_2 = require("../types");
 const workerRouter = (0, express_1.Router)();
 const prisma = new client_1.PrismaClient();
 const JWT_SECRET = process.env.WORKER_JWT_SECRET;
-const TOTAL_SUBMISSIONS = 100;
-const TOTAL_DECIMALS = Number(process.env.TOTAL_DECIMALS) || 1000000;
+const TOTAL_DECIMALS = Number(process.env.TOTAL_DECIMALS) || 1000000; //lamports
+// Solana connection (replace with your RPC endpoint)
+const connection = new web3_js_1.Connection('https://api.devnet.solana.com', 'confirmed');
+// Server's keypair (replace with your actual secret key)
+const payerSecretKey = bs58_1.default.decode(process.env.SECRET_KEY);
+const payerKeypair = web3_js_1.Keypair.fromSecretKey(payerSecretKey);
 workerRouter.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    // Todo: add sign verification logic here
-    const hardCodedWalletAddress = "obysaKv1D81BDkrobysaKv1D81BDkr" + `${Math.random()}`;
+    const body = req.body;
+    const parsedData = types_2.signinBodySchema.safeParse(body);
+    if (!parsedData.success) {
+        return res.status(400).json({
+            message: "You've sent wrong inputs"
+        });
+    }
+    const { publicKey, signature, message } = parsedData.data || {};
     try {
-        const worker = yield prisma.worker.upsert({
-            where: {
-                address: hardCodedWalletAddress
-            },
-            update: {},
-            create: {
-                address: hardCodedWalletAddress,
-                pending_amt: 0,
-                locked_amt: 0
-            }
-        });
-        const token = jsonwebtoken_1.default.sign({ workerId: worker.id }, JWT_SECRET);
-        return res.status(200).json({
-            token
-        });
+        const publicKeyUint8 = bs58_1.default.decode(publicKey);
+        const messageUint8 = new TextEncoder().encode(message);
+        // Verify the signature
+        const isValidSignature = tweetnacl_1.default.sign.detached.verify(messageUint8, new Uint8Array(signature.data), // Assuming signature is sent as Buffer-like object
+        publicKeyUint8);
+        console.log(isValidSignature);
+        if (isValidSignature) {
+            const worker = yield prisma.worker.upsert({
+                where: {
+                    address: publicKey
+                },
+                update: {},
+                create: {
+                    address: publicKey,
+                    pending_amt: 0,
+                    locked_amt: 0
+                }
+            });
+            const token = jsonwebtoken_1.default.sign({ workerId: worker.id }, JWT_SECRET);
+            return res.status(200).json({
+                token
+            });
+        }
+        else {
+            return res.status(400).json({
+                message: "InvalidSignature"
+            });
+        }
     }
     catch (e) {
         return res.status(500).json({
@@ -72,6 +99,7 @@ workerRouter.get('/nexttask', workerMiddleware_1.workerMiddleware, (req, res) =>
         });
     }
 }));
+// In workerRouter
 workerRouter.post('/submission', workerMiddleware_1.workerMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const workerId = Number(res.locals.workerId);
@@ -79,37 +107,52 @@ workerRouter.post('/submission', workerMiddleware_1.workerMiddleware, (req, res)
         const parsedBody = types_1.createSubmissionInput.safeParse(body);
         const country = req.query.country ? String(req.query.country) : undefined;
         if (parsedBody.success) {
-            console.log(workerId);
             const task = yield (0, db_1.getNextTask)({ workerId, country });
-            console.log(task);
             if (!task || (task === null || task === void 0 ? void 0 : task.id) !== Number(parsedBody.data.taskId)) {
-                console.log(task, parsedBody.data);
                 return res.status(400).json({
                     msg: "Incorrect Task Id"
                 });
             }
-            const amount = task.amount / TOTAL_SUBMISSIONS;
-            console.log(amount);
+            // Assuming task.amount is in SOL
+            const responsesNeeded = task.amount / TOTAL_DECIMALS * 1000;
+            console.log(responsesNeeded); // Convert total lamports to SOL and calculate responses needed
+            const amountPerResponse = task.amount / responsesNeeded; // Amount per response in SOL
+            console.log(amountPerResponse);
             const submission = yield prisma.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
-                const submission = yield tx.submission.create({
+                // Create the submission
+                const newSubmission = yield tx.submission.create({
                     data: {
                         option_id: Number(parsedBody.data.selection),
                         worker_id: workerId,
                         task_id: Number(parsedBody.data.taskId),
-                        amount: amount
+                        amount: amountPerResponse
                     }
                 });
+                // Update the worker's pending amount
                 yield tx.worker.update({
                     where: {
                         id: workerId
                     },
                     data: {
                         pending_amt: {
-                            increment: Number(amount)
+                            increment: Number(amountPerResponse)
                         }
                     }
                 });
-                return submission;
+                // Check the number of submissions for this task
+                const totalSubmissions = yield tx.submission.count({
+                    where: { task_id: task.id }
+                });
+                // Calculate the required responses based on the original task amount
+                const responsesNeeded = task.amount / TOTAL_DECIMALS * 1000; // Responses needed
+                // Update the task's done status if it meets the requirements
+                if (totalSubmissions >= responsesNeeded) {
+                    yield tx.task.update({
+                        where: { id: task.id },
+                        data: { done: true }
+                    });
+                }
+                return newSubmission; // Return the new submission
             }));
             const nextTask = yield (0, db_1.getNextTask)({ workerId, country });
             if (!nextTask) {
@@ -171,43 +214,64 @@ workerRouter.get('/payout', workerMiddleware_1.workerMiddleware, (req, res) => _
         });
     }
     else if (worker.pending_amt == 0) {
-        return res.json({
-            msg: "not enought amount to payout"
+        yield prisma.payouts.updateMany({
+            where: {
+                status: "Processing"
+            },
+            data: {
+                status: "Success"
+            }
+        });
+        return res.status(400).json({
+            msg: "not enough amount to payout"
         });
     }
     const address = worker === null || worker === void 0 ? void 0 : worker.address;
     console.log(worker);
-    const txnId = "0x2323422312";
-    prisma.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
-        var _a;
-        yield tx.worker.update({
-            where: {
-                id: workerId
-            },
-            data: {
-                pending_amt: {
-                    decrement: worker === null || worker === void 0 ? void 0 : worker.pending_amt
+    const workerPublicKey = new web3_js_1.PublicKey(address);
+    try {
+        const transaction = new web3_js_1.Transaction().add(web3_js_1.SystemProgram.transfer({
+            fromPubkey: payerKeypair.publicKey,
+            toPubkey: workerPublicKey,
+            lamports: (worker === null || worker === void 0 ? void 0 : worker.pending_amt) / TOTAL_DECIMALS * web3_js_1.LAMPORTS_PER_SOL,
+        }));
+        const { context: { slot: minContextSlot }, value: { blockhash, lastValidBlockHeight } } = yield connection.getLatestBlockhashAndContext();
+        const signature = yield (0, web3_js_1.sendAndConfirmTransaction)(connection, transaction, [payerKeypair]);
+        prisma.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
+            var _a;
+            yield tx.worker.update({
+                where: {
+                    id: workerId
                 },
-                locked_amt: {
-                    increment: worker === null || worker === void 0 ? void 0 : worker.pending_amt
+                data: {
+                    pending_amt: {
+                        decrement: worker === null || worker === void 0 ? void 0 : worker.pending_amt
+                    },
+                    locked_amt: {
+                        increment: worker === null || worker === void 0 ? void 0 : worker.pending_amt
+                    }
                 }
-            }
+            });
+            console.log("here");
+            yield tx.payouts.create({
+                data: {
+                    worker_id: workerId,
+                    amount: (_a = worker === null || worker === void 0 ? void 0 : worker.pending_amt) !== null && _a !== void 0 ? _a : 0,
+                    status: "Processing",
+                    signature: String(transaction)
+                }
+            });
+            console.log("here");
+        }));
+        return res.status(200).json({
+            message: "processing request",
+            amount: worker === null || worker === void 0 ? void 0 : worker.pending_amt
         });
-        console.log("here");
-        yield tx.payouts.create({
-            data: {
-                worker_id: workerId,
-                amount: (_a = worker === null || worker === void 0 ? void 0 : worker.pending_amt) !== null && _a !== void 0 ? _a : 0,
-                status: "Processing",
-                signature: txnId
-            }
+    }
+    catch (e) {
+        res.status(500).json({
+            message: "transaction failed"
         });
-        console.log("here");
-    }));
-    //Send the txn to blockchain
-    return res.status(200).json({
-        message: "processing request",
-        amount: worker === null || worker === void 0 ? void 0 : worker.pending_amt
-    });
+    }
 }));
 exports.default = workerRouter;

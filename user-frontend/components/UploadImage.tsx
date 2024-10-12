@@ -8,7 +8,10 @@ import axios from 'axios'
 import { useRouter } from 'next/navigation'
 import Spinner from "./Spinner";
 import CountryDropdown from "./dropdown/countries";
+import { TransactionStatus } from '@solana/web3.js';
 import { useDropdownStore } from "@/store/dropdown";
+import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 
 
 
@@ -23,13 +26,31 @@ interface SubmitObject {
   signature: string;
   title: string;
   country: string | null;
+  responsesNeeded: number
+}
+
+function convertLinksToObject(links: UploadedImage[], signature: string, title: string, countryValue: string, responsesNeeded: number): SubmitObject {
+  const options = links.map((link) => ({ imageUrl: link.url }));
+  
+  return {
+    options,
+    signature,
+    title,
+    country: countryValue? countryValue : null,
+    responsesNeeded
+  };
 }
 
 const UploadImage: React.FC = () => {
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
   const { countryValue } = useDropdownStore();
+  const [txSignature, setTxSignature] = useState("");
   const [disabled, setDisabled] = useState(false);
+  const [responsesNeeded, setResponsesNeeded] = useState(100);
+  const { publicKey, sendTransaction } = useWallet();
   const [loading, setLoading] = useState(false);
+  const [payLoading, setPayLoading] = useState(false);
+  const { connection } = useConnection();
   const [title, setTitle] = useState("")
   const divRef = useRef<HTMLDivElement | null>(null)
   const router = useRouter()
@@ -38,20 +59,7 @@ const UploadImage: React.FC = () => {
     nullTargetWarn: false
   })
 
-
-  function convertLinksToObject(links: UploadedImage[], signature: string, title: string, countryValue: string): SubmitObject {
-    const options = links.map((link) => ({ imageUrl: link.url }));
-    
-    return {
-      options,
-      signature,
-      title,
-      country: countryValue? countryValue : null
-    };
-  }
-
-  const onClickHandle = async () => {
-    const burl = process.env.BACKEND_LINK || "http://localhost:3003/v1/user/task";
+  async function makePaymentandSubmitTask() {
     if(!title || title.length == 0 || uploadedImages.length < 2){
       toast({
         title: "Please give appropriate input",
@@ -60,8 +68,36 @@ const UploadImage: React.FC = () => {
         className: "bg-red-500 rounded-xl text-xl"
       })
     }else{
-      setLoading(true)
-      const submitObj = convertLinksToObject(uploadedImages, "signature", title, countryValue)
+    setLoading(true)
+    const lamportsPerSol = 1_000_000_000; // 1 SOL = 1 billion lamports
+    const lamports = (responsesNeeded / 1000) * lamportsPerSol; // Adjust based on responsesNeeded
+
+    const transaction = new Transaction().add(
+        SystemProgram.transfer({
+            fromPubkey: publicKey!,
+            toPubkey: new PublicKey("Hgw9qhAZoRCH3AR97qa8tNd6r3bUwih1jqYNw4sjhH1m"),
+            lamports: lamports,  // Dynamic lamports based on responsesNeeded
+        })
+    );
+
+    const {
+        context: { slot: minContextSlot },
+        value: { blockhash, lastValidBlockHeight }
+    } = await connection.getLatestBlockhashAndContext();
+
+    const signature = await sendTransaction(transaction, connection, { minContextSlot });
+    const confirmation = await Promise.race([
+      connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, 'confirmed'),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Transaction confirmation timeout')), 30000))
+    ]);
+    console.log(signature)
+    setTxSignature(signature);
+    await Submit(signature)
+  }
+  }
+  const Submit = async (signature: string) => {
+    const burl = process.env.BACKEND_LINK || "http://localhost:3003/v1/user/task";
+      const submitObj = convertLinksToObject(uploadedImages, signature, title, countryValue, responsesNeeded)
       console.log(submitObj)
       try{
       const {data} = await axios.post(burl, submitObj, {headers: {
@@ -70,8 +106,14 @@ const UploadImage: React.FC = () => {
       console.log(data)
       localStorage.removeItem('uploadedImages')
       setUploadedImages([])
-      router.push(`/thumbnail/task/${data.id}`)
+      toast({
+        title: "Transaction successful",
+        description: `Signature: ${signature}`,
+        className: "bg-green-500 rounded-xl text-xl",
+        duration: 3000
+      });
       setLoading(false)
+      router.push(`/thumbnail/task/${data.id}`)
     }catch(e: any){
       toast({
         title: e.code,
@@ -81,7 +123,6 @@ const UploadImage: React.FC = () => {
       })
       setLoading(false)
       console.log(e)
-    }
     }
   }
 
@@ -130,7 +171,7 @@ const UploadImage: React.FC = () => {
   }, {dependencies: [uploadedImages], scope: divRef})
   useGSAP(() => {
     const q = gsap.utils.selector(divRef.current);
-    gsap.fromTo([q('.input'),q('.upload'), q('.country'), q('.submit')], {autoAlpha: 0}, {stagger: 0.2, autoAlpha: 1, duration: 0.5, ease: "power3.inOut"})
+    gsap.fromTo([q('.input'),q('.upload'), q('.country'), q('.submit')], {autoAlpha: 0}, {stagger: 0.2, autoAlpha: 1, duration: 0.5, ease: "power1.inOut"})
   }, {dependencies: [], scope: divRef})
   return (
     <div className="size-full flex flex-col justify-start items-center overflow-visible text-foreground" ref={divRef}>
@@ -178,7 +219,19 @@ const UploadImage: React.FC = () => {
     </div>
     <div className="flex w-full h-10 justify-between items-center text-border font-semibold uppercase text-lg px-2"><span>Supported Formats: jpg, png, gif, jpeg, webp, bmp, svg</span><span className="flex justify-center items-center">maxfiles: 10</span></div>
     </div>
-    <div className="flex justify-center items-center gap-4 country opacity-0"><span>Select target country:</span> <CountryDropdown /> <span className="text-border">{"(optional)"}</span></div>
+    <div className="w-full flex justify-center flex-col">
+    <div className="flex justify-center items-center gap-4 country opacity-0">
+      <span>Select target country:</span> <CountryDropdown /> <span className="text-border">{"(optional)"}</span>
+    </div>
+    <div className="flex justify-center items-center country opacity-0 m-10">
+    <label htmlFor="input" className="opacity-0 input font-semibold font-poppins text-lg text-foreground flex justify-start items-center mx-4">Number of Responses :</label>
+    <input type="range" className="mx-4" onChange={(e) => {setResponsesNeeded(Number(e.target.value))}} value={responsesNeeded} min={100} max={1000} step={50}/>
+    <span className="text-lg">{`${responsesNeeded}`}</span>
+    {/* <button className="submit font-poppins text-foreground hover:scale-[120%] m-20 shadow-[inset_0_0_0_2px_#616467] text-black px-12 py-4 rounded-full tracking-widest uppercase font-bold bg-transparent hover:bg-[#616467] hover:text-white dark:text-neutral-200 transition duration-200">
+        {payLoading ? <Spinner/> : `Pay ${responsesNeeded/1000} SOL`}
+      </button>  */}
+    </div>
+    </div>
     <div className="flex justify-center items-start gap-4 max-w-full mx-5">
         {uploadedImages && uploadedImages.map((img: { url: string; width: number; height: number }, idx: number) => (
           <div key={idx} className="relative images">
@@ -195,8 +248,8 @@ const UploadImage: React.FC = () => {
         ))}
       </div>   
       </div>
-      <button hidden={!disabled} disabled={loading} onClick={onClickHandle} className="opacity-0 submit font-poppins text-foreground hover:scale-[120%] m-20 shadow-[inset_0_0_0_2px_#616467] text-black px-12 py-4 rounded-full tracking-widest uppercase font-bold bg-transparent hover:bg-[#616467] hover:text-white dark:text-neutral-200 transition duration-200">
-        {loading ? <Spinner/> : "Submit"}
+      <button hidden={!disabled} disabled={loading} onClick={makePaymentandSubmitTask} className="opacity-0 submit font-poppins text-foreground hover:scale-[120%] m-20 shadow-[inset_0_0_0_2px_#616467] text-black px-12 py-4 rounded-full tracking-widest uppercase font-bold bg-transparent hover:bg-[#616467] hover:text-white dark:text-neutral-200 transition duration-200">
+        {loading ? <Spinner/> : `Pay ${responsesNeeded/1000} SOL`}
       </button> 
     </div>
   );

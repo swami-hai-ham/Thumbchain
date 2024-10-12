@@ -4,32 +4,64 @@ import jwt from "jsonwebtoken";
 import { workerMiddleware } from "../middlewares/workerMiddleware";
 import { getNextTask } from "../db";
 import { createSubmissionInput } from "../types";
+import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, sendAndConfirmTransaction, SystemProgram, Transaction } from "@solana/web3.js";
+import bs58 from 'bs58'
+import nacl from "tweetnacl";
+import { signinBodySchema } from "../types";
 
 const workerRouter = Router();
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.WORKER_JWT_SECRET as string;
-const TOTAL_SUBMISSIONS = 100;
-const TOTAL_DECIMALS = Number(process.env.TOTAL_DECIMALS) || 1000_000;
+const TOTAL_DECIMALS = Number(process.env.TOTAL_DECIMALS) || 1000_000; //lamports
+// Solana connection (replace with your RPC endpoint)
+const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
+
+// Server's keypair (replace with your actual secret key)
+const payerSecretKey = bs58.decode(process.env.SECRET_KEY!);
+const payerKeypair = Keypair.fromSecretKey(payerSecretKey);
 
 workerRouter.post("/signin", async (req, res) => {
-    // Todo: add sign verification logic here
-    const hardCodedWalletAddress = "obysaKv1D81BDkrobysaKv1D81BDkr" + `${Math.random()}`
+    const body = req.body;
+    const parsedData = signinBodySchema.safeParse(body);
+    if(!parsedData.success){
+        return res.status(400).json({
+            message: "You've sent wrong inputs"
+        });
+    }
+    const { publicKey, signature, message} = parsedData.data || {};
     try{
-    const worker = await prisma.worker.upsert({
-        where:{
-            address: hardCodedWalletAddress
-        },
-        update:{},
-        create:{
-            address: hardCodedWalletAddress,
-            pending_amt: 0,
-            locked_amt: 0
+        const publicKeyUint8 = bs58.decode(publicKey);
+        const messageUint8 = new TextEncoder().encode(message);
+
+        // Verify the signature
+        const isValidSignature = nacl.sign.detached.verify(
+        messageUint8,
+        new Uint8Array(signature.data), // Assuming signature is sent as Buffer-like object
+        publicKeyUint8
+        );
+        console.log(isValidSignature)
+
+        if(isValidSignature){
+            const worker = await prisma.worker.upsert({
+                where:{
+                    address: publicKey
+                },
+                update:{},
+                create:{
+                    address: publicKey,
+                    pending_amt: 0,
+                    locked_amt: 0
+                }
+            })
+            const token = jwt.sign({workerId: worker.id}, JWT_SECRET)
+            return res.status(200).json({
+                token
+            })
+        }else{
+            return res.status(400).json({
+                message: "InvalidSignature"
+            })
         }
-    })
-    const token = jwt.sign({workerId: worker.id}, JWT_SECRET)
-    return res.status(200).json({
-        token
-    })
     }catch(e){
         return res.status(500).json({
             error: e
@@ -62,73 +94,93 @@ workerRouter.get('/nexttask', workerMiddleware, async (req, res) => {
     }
 })
 
+// In workerRouter
 workerRouter.post('/submission', workerMiddleware, async (req, res) => {
-    try{
-    const workerId = Number(res.locals.workerId);
-    const body = req.body;
-    const parsedBody = createSubmissionInput.safeParse(body);
-    const country = req.query.country ? String(req.query.country) : undefined;
+    try {
+        const workerId = Number(res.locals.workerId);
+        const body = req.body;
+        const parsedBody = createSubmissionInput.safeParse(body);
+        const country = req.query.country ? String(req.query.country) : undefined;
 
-    if(parsedBody.success){
-        console.log(workerId)
-        const task = await getNextTask({workerId, country});
-        console.log(task)
-        if(!task || task?.id !== Number(parsedBody.data.taskId)){
-            console.log(task, parsedBody.data)
-            return res.status(400).json({
-                msg: "Incorrect Task Id"
-            })
-        }
-        const amount = task.amount/ TOTAL_SUBMISSIONS;
-        console.log(amount)
+        if (parsedBody.success) {
+            const task = await getNextTask({ workerId, country });
+            if (!task || task?.id !== Number(parsedBody.data.taskId)) {
+                return res.status(400).json({
+                    msg: "Incorrect Task Id"
+                });
+            }
 
-        const submission = await prisma.$transaction(async tx => {
-            const submission = await tx.submission.create({
-                data: {
-                    option_id: Number(parsedBody.data.selection),
-                    worker_id: workerId,
-                    task_id: Number(parsedBody.data.taskId),
-                    amount: amount
-                }
-            })
+            // Assuming task.amount is in SOL
+            const responsesNeeded = task.amount / TOTAL_DECIMALS * 1000;
+            console.log(responsesNeeded) // Convert total lamports to SOL and calculate responses needed
+            const amountPerResponse = task.amount / responsesNeeded; // Amount per response in SOL
+            console.log(amountPerResponse)
 
-            await tx.worker.update({
-                where: {
-                    id: workerId
-                },
-                data: {
-                    pending_amt : {
-                        increment: Number(amount)
+
+            const submission = await prisma.$transaction(async tx => {
+                // Create the submission
+                const newSubmission = await tx.submission.create({
+                    data: {
+                        option_id: Number(parsedBody.data.selection),
+                        worker_id: workerId,
+                        task_id: Number(parsedBody.data.taskId),
+                        amount: amountPerResponse
                     }
+                });
+
+                // Update the worker's pending amount
+                await tx.worker.update({
+                    where: {
+                        id: workerId
+                    },
+                    data: {
+                        pending_amt: {
+                            increment: Number(amountPerResponse)
+                        }
+                    }
+                });
+
+                // Check the number of submissions for this task
+                const totalSubmissions = await tx.submission.count({
+                    where: { task_id: task.id }
+                });
+
+                // Calculate the required responses based on the original task amount
+                const responsesNeeded = task.amount / TOTAL_DECIMALS * 1000; // Responses needed
+
+                // Update the task's done status if it meets the requirements
+                if (totalSubmissions >= responsesNeeded) {
+                    await tx.task.update({
+                        where: { id: task.id },
+                        data: { done: true }
+                    });
                 }
-            })
 
-            return submission;
-        })
-        
+                return newSubmission; // Return the new submission
+            });
 
-        const nextTask = await getNextTask({workerId, country});
-        if(!nextTask){
-            return res.status(200).json({
-                msg: "There are no tasks left for you to review"
-            })
-        }else{
-            return res.status(200).json({
-                nextTask
-            })
+            const nextTask = await getNextTask({ workerId, country });
+            if (!nextTask) {
+                return res.status(200).json({
+                    msg: "There are no tasks left for you to review"
+                });
+            } else {
+                return res.status(200).json({
+                    nextTask
+                });
+            }
+        } else {
+            return res.status(400).json({
+                error: "Incorrect inputs"
+            });
         }
-    }else{
-        return res.status(400).json({
-            error : "Incorrect inputs"
-        })
-    }
-    }
-    catch(e){
+    } catch (e) {
         return res.status(500).json({
             e
-        })
+        });
     }
-})
+});
+
 
 workerRouter.get('/balance', workerMiddleware, async (req, res) => {
     const workerId = res.locals.workerId;
@@ -168,15 +220,41 @@ workerRouter.get('/payout', workerMiddleware, async (req, res) => {
             msg: "worker not found"
         })
     }else if(worker.pending_amt == 0){
-        return res.json({
-            msg: "not enought amount to payout"
+        await prisma.payouts.updateMany({
+            where: {
+                status: "Processing"
+            },
+            data: {
+                status: "Success"
+            }
+        })
+        return res.status(400).json({
+            msg: "not enough amount to payout"
         })
     }
 
     const address = worker?.address;
     console.log(worker)
-    const txnId = "0x2323422312";
+    const workerPublicKey = new PublicKey(address!);
 
+    try{
+        const transaction = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey: payerKeypair.publicKey,
+          toPubkey: workerPublicKey,
+          lamports: worker?.pending_amt! /TOTAL_DECIMALS* LAMPORTS_PER_SOL,
+        })
+    );
+    const {
+        context: { slot: minContextSlot },
+        value: { blockhash, lastValidBlockHeight }
+    } = await connection.getLatestBlockhashAndContext();
+    
+    const signature = await sendAndConfirmTransaction(
+        connection,
+        transaction,
+        [payerKeypair],
+    );
     prisma.$transaction(async tx => {
         await tx.worker.update({
             where: {
@@ -197,17 +275,20 @@ workerRouter.get('/payout', workerMiddleware, async (req, res) => {
                 worker_id: workerId,
                 amount: worker?.pending_amt ?? 0,
                 status: "Processing",
-                signature: txnId
+                signature: String(transaction)
             }
         })
         console.log("here")
     })
 
-    //Send the txn to blockchain
-
     return res.status(200).json({
         message: "processing request",
         amount: worker?.pending_amt
     })
+    }catch(e){
+        res.status(500).json({
+            message: "transaction failed"
+        })
+    }
 })
 export default workerRouter;

@@ -29,12 +29,6 @@ interface CountryDropdownProps {
 const CountryDropdown = ({ disabled }: CountryDropdownProps) => {
     const { countryValue, setCountryValue, openCountryDropdown, setOpenCountryDropdown } = useDropdownStore();
     const C = countries as CountryProps[];
-    useEffect(() => {
-        console.log(C)
-        C.map((country) => {
-            console.log(country)
-        })
-    }, [])
     return (
         <Popover open={openCountryDropdown} onOpenChange={setOpenCountryDropdown}>
             <PopoverTrigger asChild>
