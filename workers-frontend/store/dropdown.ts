@@ -11,6 +11,11 @@ interface DropdownStateProps {
     setOpenStateDropdown: (openState: boolean) => void;
 }
 
+interface PendingAmt{
+    amount: number;
+    setAmount: (amount: number) => void;
+}
+
 export const useDropdownStore = create<DropdownStateProps>((set) => ({
     countryValue: "",
     setCountryValue: (country: string) => {
@@ -29,3 +34,10 @@ export const useDropdownStore = create<DropdownStateProps>((set) => ({
         set({ openStateDropdown: openState });
     },
 }));
+
+export const usePendingAmt = create<PendingAmt>((set) => ({
+    amount: 0,
+    setAmount: (amount: number) =>{
+        set({amount: amount})
+    }
+}))

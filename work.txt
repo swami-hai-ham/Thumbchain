@@ -1,9 +1,4 @@
-- work on payment integration
-    - watch video
-    - develop frontend auth
-    - develop backend auth
-- animation nexttask.tsx
+- transaction validation payouts
 
 
-resources: 
-    password user: KqmqcKbaIrM96CQ
+

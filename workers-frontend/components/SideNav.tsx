@@ -7,14 +7,16 @@ import NumberTicker from './ui/number-ticker'
 import axios from 'axios'
 import { Button } from './ui/button'
 import { useToast } from "@/hooks/use-toast"
+import { usePendingAmt } from '@/store/dropdown'
 type Props = {}
 
 const SideNav = (props: Props) => {
   const { toast } = useToast()
     const navRef = useRef<HTMLDivElement | null>(null)
-    const [balance, setBalance] = useState({ pendingAmount: 0, lockedAmount: 0 });
+    const {amount, setAmount} = usePendingAmt()
     const handleWithDraw = async () => {
       try {
+        const token = localStorage.getItem('token');  
         const response = await axios.get('http://localhost:3003/v1/worker/payout', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -28,6 +30,12 @@ const SideNav = (props: Props) => {
             duration: 3000
           });
         } 
+        const responsepay = await axios.get('http://localhost:3003/v1/worker/balance', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setAmount(Number(responsepay.data.pendingAmount))
       } catch (error: any) {
         if (error.response && error.response.status === 400) {
           toast({
@@ -56,17 +64,14 @@ const SideNav = (props: Props) => {
             });
             
             // Update the balance state with the response data
-            setBalance({
-              pendingAmount: Number(response.data.pendingAmount),
-              lockedAmount: Number(response.data.lockedAmount),
-            });
+            setAmount(Number(response.data.pendingAmount))
           } catch (error) {
             console.error('Error fetching balance:', error);
           }
         };
     
         fetchBalance(); // Call the fetch function on component load
-        console.log(balance)
+        console.log(amount)
       }, []); 
     useGSAP(() => {
         const q = gsap.utils.selector(navRef.current);
@@ -85,14 +90,18 @@ const SideNav = (props: Props) => {
             </Link>
             <Link href={'/submissions'} className='flex justify-center items-center gap-6 sideNavLink opacity-0'>
             <img src="/check-fill.svg" alt="" />
-            <span className='text-foreground font-poppins text-xl'>Submissions</span>
+            <span className='text-foreground font-poppins text-xl'>Surveys</span>
+            </Link>
+            <Link href={'/submissions'} className='flex justify-center items-center gap-6 sideNavLink opacity-0'>
+            <img src="/btc-fill.svg" alt="" />
+            <span className='text-foreground font-poppins text-xl'>Payouts</span>
             </Link>
             <div className='flex justify-center items-start w-3/4 flex-col gap-3'>
                 {
-                    balance.pendingAmount == 0 ? (
+                    amount == 0 ? (
                         <div className='text-xl text-foreground balance'><span className='mr-2'>Pending Balance:</span> <span className="text-foreground text-xl font-bungee">0</span></div>
                     ) : (
-                        <div className='text-xl text-foreground balance'><span className='mr-2'>Pending Balance:</span><NumberTicker value={balance.pendingAmount / 1000000} decimalPlaces={3} delay={1} className='text-foreground text-xl font-bungee balance' /></div>
+                        <div className='text-xl text-foreground balance'><span className='mr-2'>Pending Balance:</span><NumberTicker value={amount / 1000000} decimalPlaces={3} delay={1} className='text-foreground text-xl font-bungee balance' /></div>
                     )
                 }
             </div>

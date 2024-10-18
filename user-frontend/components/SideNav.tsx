@@ -26,11 +26,6 @@ const SideNav = (props: Props) => {
             <img src="/check-fill.svg" alt="" />
             <span className='text-foreground font-poppins text-xl'>Tasks</span>
             </Link>
-            <Link href={'/payments'} className='flex justify-center items-center gap-6 sideNavLink opacity-0'>
-            <img src="/btc-fill.svg" alt="" />
-            <span className='text-foreground font-poppins text-xl'>Payments</span>
-            </Link>
-            
         </div>
     )
 }

@@ -46,7 +46,6 @@ const NavBar = () => {
       <Link href={'/thumbnail'} className='font-montserrat text-xl font-medium text-foreground hover:text-primary'>Thumbnail</Link>
       <Link href={'/survey'} className='font-montserrat text-xl font-medium text-foreground hover:text-primary'>Survey</Link>
       <Link href={'/tasks'} className='font-montserrat text-xl font-medium text-foreground hover:text-primary'>Tasks</Link>
-      <Link href={'/payments'} className='font-montserrat text-xl font-medium text-foreground hover:text-primary'>Payments</Link>
       <CustomConnectButton />
       <img src="https://media.tenor.com/3EbQTgb3eqwAAAAi/petpet-transparent.gif"  alt="" className='rub opacity-0 absolute h-11 w-11 left-[30px] top-2 '/>
       </div>

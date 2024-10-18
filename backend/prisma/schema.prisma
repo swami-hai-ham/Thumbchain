@@ -17,6 +17,7 @@ model User{
   id      Int   @id @default(autoincrement())
   address String   @unique
   tasks   Task[]
+  
 }
 
 model Task{
@@ -44,6 +45,7 @@ model Worker{
   id          Int      @id @default(autoincrement())
   address     String   @unique
   submissions Submission[]
+  // responses   Response[]
   pending_amt Int      // amount in lamports 10^6
   locked_amt  Int      // amount in lamports 10^6
   payouts Payouts[]
@@ -75,3 +77,45 @@ enum TxnStatus {
   Success
   Failure
 }
+
+// model Survey {
+//   id        Int        @id @default(autoincrement())
+//   name      String
+//   questions Question[] 
+//   reponse   Response[]
+// }
+
+// model Question {
+//   id        Int        @id @default(autoincrement())
+//   text      String     
+//   type      QuestionType 
+//   survey    Survey     @relation(fields: [surveyId], references: [id])
+//   surveyId  Int
+//   options   QuesOption[]   
+//   responses Response[]
+// }
+
+// model QuesOption {
+//   id         Int       @id @default(autoincrement())
+//   text       String   
+//   question   Question  @relation(fields: [questionId], references: [id])
+//   questionId Int
+// }
+
+// enum QuestionType {
+//   SINGLE    
+//   MULTIPLE  
+// }
+
+// model Response {
+//   id               Int         @id @default(autoincrement())
+//   surveyId         Int         
+//   questionId       Int         
+//   workerId           Int         
+//   selectedOptions  Int[]       
+//   createdAt        DateTime    @default(now()) 
+
+//   survey           Survey      @relation(fields: [surveyId], references: [id])
+//   question         Question    @relation(fields: [questionId], references: [id])
+//   worker           Worker      @relation(fields: [workerId], references: [id]) // Uncomment if you have a User model
+// }

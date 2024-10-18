@@ -1,10 +1,13 @@
 "use client";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import React, {useState} from "react";
+import gsap from 'gsap'
+import { useGSAP } from "@gsap/react";
+import React, {useRef, useState} from "react";
 import axios from "axios";
 import Spinner from "@/components/Spinner";
-import { useDropdownStore } from "@/store/dropdown";
+import { useDropdownStore, usePendingAmt } from "@/store/dropdown";
+import { useToast } from "@/hooks/use-toast";
 
 type ThumbnailOption = {
   id: number;
@@ -22,8 +25,10 @@ type Task = {
 
 const TaskPage = () => {
   const searchParams = useSearchParams(); 
+  const divRef = useRef<HTMLDivElement | null>(null);
+  const {setAmount} = usePendingAmt()
   const taskData = searchParams.get("task"); 
-  
+  const { toast } = useToast()
   const [loading, setLoading] = useState(false);
   const [selection, setSelection] = useState<number | null>(null);
   const router = useRouter();
@@ -39,6 +44,7 @@ const TaskPage = () => {
 
   const handleClick = async () => {
     setLoading(true);
+    const token = localStorage.getItem('token');
     try {
         const body = {
             taskId: `${task?.id}`,
@@ -51,7 +57,7 @@ const TaskPage = () => {
             {
                 headers: {
                     Authorization:
-                        "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3b3JrZXJJZCI6MSwiaWF0IjoxNzI4NDc3OTM3fQ.DwzqnLk-hshw_FL9ZzhMV59mv_2969PJv-B0zibJ5To",
+                        `Bearer ${token}`,
                 },
             }
         );
@@ -67,15 +73,26 @@ const TaskPage = () => {
                 router.push("/thumbnail/tasksdone");
             }
         }
-    } catch (error) {
-        console.error("Error submitting task", error);
+        const responsepay = await axios.get('http://localhost:3003/v1/worker/balance', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setAmount(Number(responsepay.data.pendingAmount))
+    } catch (e) {
+      toast({
+        title: "Submission Error",
+        variant: "destructive",
+        duration: 2000,
+        description: "Make sure you've not submited already",
+        className: "bg-red-500 rounded-xl text-xl"
+      })
+        console.error("Error submitting task", e);
     } finally {
         setLoading(false);
     }
   };
 
-  // Split task options into two rows if more than 5
-  // Check if options are more than 5
   const shouldSplit = task?.options.length? task?.options.length > 4 : false;
 
   const firstRowOptions = shouldSplit
@@ -86,15 +103,27 @@ const TaskPage = () => {
     ? task?.options.slice(Math.ceil(task.options.length / 2))
     : [];
 
-
+    useGSAP(() => {
+      
+      const q = gsap.utils.selector(divRef);
+      gsap.fromTo(q('.title'), 
+          {autoAlpha: 0, y: -100}, 
+          {autoAlpha: 1, y:0, duration: 1, scale: 1, ease: "bounce.inOut"}
+      );
+      gsap.fromTo(q('.images'), 
+      { autoAlpha: 0, scale: 0.5, rotate: -20 }, 
+      { autoAlpha: 1, scale: 1, stagger: 0.2, duration: 0.5, rotate: 0, ease: "power2.out" }
+      )
+      gsap.fromTo(q('.submit'), {autoAlpha: 0, scale: 0.2}, { autoAlpha: 1, scale: 1.2, duration: 0.5, ease: "power2.out"})
+  }, []);
   return (
-    <div className="flex flex-col items-center p-6 h-screen w-full text-foreground">
-      <h1 className="text-4xl font-bold font-montserrat my-10">{task?.title}</h1>
+    <div className="flex flex-col items-center p-6 h-screen w-full text-foreground" ref={divRef}>
+      <h1 className="text-4xl font-bold font-montserrat my-10 title opacity-0">{task?.title}</h1>
       
       {/* First row of options */}
       <div className="flex justify-between items-center gap-10 w-full mx-5 px-20 my-6">
         {firstRowOptions?.map((option: ThumbnailOption) => (
-          <div key={option.id} className="relative images">
+          <div key={option.id} className="relative images images opacity-0">
             <img
               src={option.image_url}
               style={{
@@ -131,7 +160,7 @@ const TaskPage = () => {
 
       <button
         disabled={loading || selection == null}
-        className={`submit font-poppins text-foreground m-20 px-12 py-4 rounded-full tracking-widest uppercase font-bold bg-transparent text-black shadow-[inset_0_0_0_2px_#616467] transition duration-200
+        className={`submit opacity-0 font-poppins text-foreground m-20 px-12 py-4 rounded-full tracking-widest uppercase font-bold bg-transparent text-black shadow-[inset_0_0_0_2px_#616467] transition duration-200
           ${loading || selection == null
             ? "bg-border cursor-not-allowed"
             : "hover:scale-[120%] hover:bg-[#616467] hover:text-white"}
