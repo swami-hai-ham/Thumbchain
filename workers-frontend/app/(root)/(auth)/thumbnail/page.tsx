@@ -1,15 +1,14 @@
 "use client";
 import CountryDropdown from "@/components/dropdown/countries";
 import Link from "next/link";
-import React, {  useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import ShineBorder from "@/components/ui/shine-border";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import { useDropdownStore } from "@/store/dropdown";
-import axios from 'axios'
+import axios from "axios";
 import { useRouter } from "next/navigation";
-
 
 type Props = {};
 
@@ -19,14 +18,15 @@ const page = (props: Props) => {
   const headingRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const BACKEND_LINK = process.env.NEXT_PUBLIC_BACKEND_LINK;
 
   useGSAP(() => {
     const tl = gsap.timeline();
-    
+
     tl.fromTo(
-      shineBorderRef.current, 
+      shineBorderRef.current,
       {
-        delay:0.5,
+        delay: 0.5,
         autoAlpha: 0,
         scale: 0.8, // Initial state
       },
@@ -37,9 +37,9 @@ const page = (props: Props) => {
         ease: "power2.out",
       }
     ).fromTo(
-      headingRef.current, 
+      headingRef.current,
       {
-        delay:0.5,
+        delay: 0.5,
         y: -50,
         autoAlpha: 0, // Initial state
       },
@@ -54,19 +54,18 @@ const page = (props: Props) => {
   }, []);
 
   const handleFetchTask = async () => {
-    console.log(countryValue)
+    console.log(countryValue);
     setLoading(true);
     try {
       const response = await axios.get(
-        `http://localhost:3003/v1/worker/nexttask?country=${countryValue}`,
+        `${BACKEND_LINK}/v1/worker/nexttask?country=${countryValue}`,
         {
           headers: {
-            Authorization:
-              "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ3b3JrZXJJZCI6MSwiaWF0IjoxNzI4NDc3OTM3fQ.DwzqnLk-hshw_FL9ZzhMV59mv_2969PJv-B0zibJ5To",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
-  
+
       // Redirect to the next task page
       router.push(
         `/thumbnail/nexttask?task=${encodeURIComponent(
@@ -84,20 +83,32 @@ const page = (props: Props) => {
       setLoading(false);
     }
   };
-  
-  
+
   return (
     <div className="w-full h-1/2 px-10 flex flex-col justify-center items-center text-foreground p-4">
-      <ShineBorder ref={shineBorderRef} className='shine w-full flex flex-col justify-center items-center bg-background h-full text-foreground opacity-0' color={["#4B0082", "#00BFFF", "#00FF7F"]} duration={5}>
-      <h1 className="font-montserrat text-5xl font-semibold mb-10" ref={headingRef}>
-        Rate Thumbnails
-      </h1>
-      <div className="w-full md:w-1/2 lg:w-1/3 flex items-center space-x-3">
-        <CountryDropdown/>
-        <Button onClick={handleFetchTask} role="link" disabled={loading} className="rounded-xl z-10 hover:scale-110 transition-transform duration-100">
+      <ShineBorder
+        ref={shineBorderRef}
+        className="shine w-full flex flex-col justify-center items-center bg-background h-full text-foreground opacity-0"
+        color={["#4B0082", "#00BFFF", "#00FF7F"]}
+        duration={5}
+      >
+        <h1
+          className="font-montserrat text-5xl font-semibold mb-10"
+          ref={headingRef}
+        >
+          Rate Thumbnails
+        </h1>
+        <div className="w-full md:w-1/2 lg:w-1/3 flex items-center space-x-3">
+          <CountryDropdown />
+          <Button
+            onClick={handleFetchTask}
+            role="link"
+            disabled={loading}
+            className="rounded-xl z-10 hover:scale-110 transition-transform duration-100"
+          >
             {loading ? "Loading..." : "Let's Go!"}
           </Button>
-      </div>
+        </div>
       </ShineBorder>
     </div>
   );

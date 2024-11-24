@@ -1,4 +1,7 @@
-- transaction validation payouts
-
-
-
+done by link / id jumping task
+- Captcha
+- payouts table
+- survey backend
+- survey frontend
+- Refactor code
+- redis replay prevention

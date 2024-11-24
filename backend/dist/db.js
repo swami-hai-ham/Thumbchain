@@ -27,7 +27,7 @@ const getNextTask = (_a) => __awaiter(void 0, [_a], void 0, function* ({ workerI
         whereCondition.country = country;
     }
     else {
-        whereCondition.country = null; // Ensure you're looking for null if no country is provided
+        whereCondition.country = null;
     }
     const task = yield prisma.task.findFirst({
         where: whereCondition,

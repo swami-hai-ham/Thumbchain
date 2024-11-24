@@ -13,11 +13,12 @@ type Props = {}
 const SideNav = (props: Props) => {
   const { toast } = useToast()
     const navRef = useRef<HTMLDivElement | null>(null)
+    const BACKEND_LINK = process.env.NEXT_PUBLIC_BACKEND_LINK;
     const {amount, setAmount} = usePendingAmt()
     const handleWithDraw = async () => {
       try {
         const token = localStorage.getItem('token');  
-        const response = await axios.get('http://localhost:3003/v1/worker/payout', {
+        const response = await axios.get(`${BACKEND_LINK}/v1/worker/payout`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
@@ -30,7 +31,7 @@ const SideNav = (props: Props) => {
             duration: 3000
           });
         } 
-        const responsepay = await axios.get('http://localhost:3003/v1/worker/balance', {
+        const responsepay = await axios.get(`${BACKEND_LINK}/v1/worker/balance`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -57,7 +58,7 @@ const SideNav = (props: Props) => {
         const token = localStorage.getItem('token'); // Get token from local storage
         const fetchBalance = async () => {
           try {
-            const response = await axios.get('http://localhost:3003/v1/worker/balance', {
+            const response = await axios.get(`${BACKEND_LINK}/v1/worker/balance`, {
               headers: {
                 Authorization: `Bearer ${token}`,
               },

@@ -2,7 +2,7 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import Spinner from "@/components/Spinner";
 import { useDropdownStore, usePendingAmt } from "@/store/dropdown";
@@ -41,6 +41,43 @@ const TaskPage = () => {
     task = null;
   }
 
+  useEffect(() => {
+    const checkTaskValidity = async () => {
+      try {
+        const body = { taskId: `${task?.id}` };
+        const token = localStorage.getItem("token");
+
+        const checkValid = await axios.post(
+          `${BACKEND_LINK}/v1/worker/checkredir`,
+          body,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (checkValid.status === 200) {
+          console.log("Task is valid");
+        }
+      } catch (error) {
+        console.error("Error validating task:", error);
+        toast({
+            title: "Task already done",
+            variant: "destructive",
+            duration: 2000,
+            description: "Make sure you've not submited already",
+            className: "bg-red-500 rounded-xl text-xl",
+          });
+        setTimeout(() => {
+            router.push('/thumbnail')
+        })
+      }
+    };
+
+    checkTaskValidity();
+  }, []);
+
   const handleClick = async () => {
     setLoading(true);
     const token = localStorage.getItem("token");
@@ -51,7 +88,7 @@ const TaskPage = () => {
       };
 
       const response = await axios.post(
-        `${BACKEND_LINK}/v1/worker/submission?country=${countryValue}`,
+        `${BACKEND_LINK}/v1/worker/redirsub`,
         body,
         {
           headers: {
@@ -61,33 +98,16 @@ const TaskPage = () => {
       );
 
       if (response.status === 200) {
-        if (response.data.nextTask) {
-          const responsepay = await axios.get(
-            `${BACKEND_LINK}/v1/worker/balance`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          setAmount(Number(responsepay.data.pendingAmount));
-          router.push(
-            `/thumbnail/nexttask?task=${encodeURIComponent(
-              JSON.stringify(response.data.nextTask)
-            )}`
-          );
-        } else {
-          const responsepay = await axios.get(
-            `${BACKEND_LINK}/v1/worker/balance`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          setAmount(Number(responsepay.data.pendingAmount));
-          router.push("/thumbnail/tasksdone");
-        }
+        const responsepay = await axios.get(
+          `${BACKEND_LINK}/v1/worker/balance`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setAmount(Number(responsepay.data.pendingAmount));
+        router.push("/thumbnail/tasksdone");
       }
     } catch (e) {
       toast({
@@ -116,29 +136,29 @@ const TaskPage = () => {
   const didAnimate = useRef(false);
 
   useGSAP(() => {
-      const q = gsap.utils.selector(divRef);
-      gsap.fromTo(
-        q(".title"),
-        { autoAlpha: 0, y: -100 },
-        { autoAlpha: 1, y: 0, duration: 1, scale: 1, ease: "bounce.inOut" }
-      );
-      gsap.fromTo(
-        q(".images"),
-        { autoAlpha: 0, scale: 0.5, rotate: -20 },
-        {
-          autoAlpha: 1,
-          scale: 1,
-          stagger: 0.2,
-          duration: 0.5,
-          rotate: 0,
-          ease: "power2.out",
-        }
-      );
-      gsap.fromTo(
-        q(".submit"),
-        { autoAlpha: 0, scale: 0.2 },
-        { autoAlpha: 1, scale: 1.2, duration: 0.5, ease: "power2.out" }
-      );
+    const q = gsap.utils.selector(divRef);
+    gsap.fromTo(
+      q(".title"),
+      { autoAlpha: 0, y: -100 },
+      { autoAlpha: 1, y: 0, duration: 1, scale: 1, ease: "bounce.inOut" }
+    );
+    gsap.fromTo(
+      q(".images"),
+      { autoAlpha: 0, scale: 0.5, rotate: -20 },
+      {
+        autoAlpha: 1,
+        scale: 1,
+        stagger: 0.2,
+        duration: 0.5,
+        rotate: 0,
+        ease: "power2.out",
+      }
+    );
+    gsap.fromTo(
+      q(".submit"),
+      { autoAlpha: 0, scale: 0.2 },
+      { autoAlpha: 1, scale: 1.2, duration: 0.5, ease: "power2.out" }
+    );
   }, [task?.title]);
 
   return (

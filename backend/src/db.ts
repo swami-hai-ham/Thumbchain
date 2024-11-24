@@ -32,7 +32,7 @@ export const getNextTask = async ({ workerId, country }: getNextTaskType) => {
     if (country) {
         whereCondition.country = country;
     } else {
-        whereCondition.country = null; // Ensure you're looking for null if no country is provided
+        whereCondition.country = null; 
     }
 
     const task = await prisma.task.findFirst({

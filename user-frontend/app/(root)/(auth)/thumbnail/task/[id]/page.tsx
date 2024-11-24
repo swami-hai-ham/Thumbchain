@@ -24,12 +24,13 @@ const Page = () => {
   const params = useParams();
   const [chartData, setChartData] = useState<Data>({ counts: [], urls: [] });
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast()
+  const { toast } = useToast();
+  const BACKEND_LINK = process.env.NEXT_PUBLIC_BACKEND_LINK;
 
   // Function to get data and update state
   const getData = async () => {
     try {
-      const response = await axios.get<Response[]>(`http://localhost:3003/v1/user/task/${params.id}`, {
+      const response = await axios.get<Response[]>(`${BACKEND_LINK}/v1/user/task/${params.id}`, {
         headers: {
           Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTcyNTc4OTc2NH0.yotBb3d7q8bkSz-Ztdi0K3hg4fdBXwQbR3i6IZVowCc`
         }

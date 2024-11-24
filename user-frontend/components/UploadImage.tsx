@@ -49,7 +49,6 @@ const UploadImage: React.FC = () => {
   const [responsesNeeded, setResponsesNeeded] = useState(100);
   const { publicKey, sendTransaction } = useWallet();
   const [loading, setLoading] = useState(false);
-  const [payLoading, setPayLoading] = useState(false);
   const { connection } = useConnection();
   const [title, setTitle] = useState("")
   const divRef = useRef<HTMLDivElement | null>(null)
@@ -69,14 +68,14 @@ const UploadImage: React.FC = () => {
       })
     }else{
     setLoading(true)
-    const lamportsPerSol = 1_000_000_000; // 1 SOL = 1 billion lamports
-    const lamports = (responsesNeeded / 1000) * lamportsPerSol; // Adjust based on responsesNeeded
+    const lamportsPerSol = 1_000_000_000; 
+    const lamports = (responsesNeeded / 1000) * lamportsPerSol; 
 
     const transaction = new Transaction().add(
         SystemProgram.transfer({
             fromPubkey: publicKey!,
             toPubkey: new PublicKey("Hgw9qhAZoRCH3AR97qa8tNd6r3bUwih1jqYNw4sjhH1m"),
-            lamports: lamports,  // Dynamic lamports based on responsesNeeded
+            lamports: lamports,  
         })
     );
 
@@ -93,10 +92,11 @@ const UploadImage: React.FC = () => {
     console.log(signature)
     setTxSignature(signature);
     await Submit(signature)
+    setLoading(false);
   }
   }
   const Submit = async (signature: string) => {
-    const burl = process.env.BACKEND_LINK || "http://localhost:3003/v1/user/task";
+      const burl = process.env.NEXT_PUBLIC_BACKEND_LINK + "/v1/user/task" || "";
       const submitObj = convertLinksToObject(uploadedImages, signature, title, countryValue, responsesNeeded)
       console.log(submitObj)
       try{
@@ -128,10 +128,10 @@ const UploadImage: React.FC = () => {
 
   useEffect(() => {
     console.log('Uploaded Images:', uploadedImages);
-  }, [uploadedImages]); // Log whenever uploadedImages is updated
+  }, [uploadedImages]); 
 
   useEffect(() => {
-    // Retrieve from localStorage on initial render
+   
     const savedImages = localStorage.getItem("uploadedImages");
     console.log(savedImages)
     if (savedImages) {
@@ -176,7 +176,7 @@ const UploadImage: React.FC = () => {
   return (
     <div className="size-full flex flex-col justify-start items-center overflow-visible text-foreground" ref={divRef}>
     <label htmlFor="input" className="opacity-0 input font-semibold font-poppins text-3xl text-foreground w-3/4 mt-10 flex justify-start items-center">Title</label>
-    <input type="text" className="opacity-0 input bg-input w-3/4 h-20 m-10 p-10 text-2xl font-semibold font-poppins text-foreground" onChange={(e) => {setTitle(e.target.value)}} placeholder="Select the most appealing thumbnail."/>
+    <input type="text" className="opacity-0 input bg-input w-3/4 h-20 m-10 p-10 text-2xl font-semibold font-poppins text-foreground" onChange={(e) => {setTitle(e.target.value)}} placeholder="Select the most appealing thumbnail." disabled={loading}/>
     <div className="h-screen w-full flex flex-col justify-start items-center">
     <div className='relative w-3/4 h-1/2 border-border border-2 m-10 flex flex-col p-8 upload opacity-0'>
     <div className="flex w-full justify-between items-center">
@@ -185,7 +185,10 @@ const UploadImage: React.FC = () => {
       setDisabled(false);
       setUploadedImages([]);
       localStorage.setItem("uploadedImages", JSON.stringify([]))
-    }}>Retry <svg xmlns="http://www.w3.org/2000/svg" className="transition-transform duration-3000 ease-in-out transform hover:rotate-[360deg] group" viewBox="0 0 24 24" width="16" height="16" fill="rgba(77,77,77,1)"><path d="M12 4C14.5905 4 16.8939 5.23053 18.3573 7.14274L16 9.5H22V3.5L19.7814 5.71863C17.9494 3.452 15.1444 2 12 2 6.47715 2 2 6.47715 2 12H4C4 7.58172 7.58172 4 12 4ZM20 12C20 16.4183 16.4183 20 12 20 9.40951 20 7.10605 18.7695 5.64274 16.8573L8 14.5 2 14.5V20.5L4.21863 18.2814C6.05062 20.548 8.85557 22 12 22 17.5228 22 22 17.5228 22 12H20Z"></path></svg></button>
+      }}
+      disabled={loading}
+    >
+      Retry <svg xmlns="http://www.w3.org/2000/svg" className="transition-transform duration-3000 ease-in-out transform hover:rotate-[360deg] group" viewBox="0 0 24 24" width="16" height="16" fill="rgba(77,77,77,1)"><path d="M12 4C14.5905 4 16.8939 5.23053 18.3573 7.14274L16 9.5H22V3.5L19.7814 5.71863C17.9494 3.452 15.1444 2 12 2 6.47715 2 2 6.47715 2 12H4C4 7.58172 7.58172 4 12 4ZM20 12C20 16.4183 16.4183 20 12 20 9.40951 20 7.10605 18.7695 5.64274 16.8573L8 14.5 2 14.5V20.5L4.21863 18.2814C6.05062 20.548 8.85557 22 12 22 17.5228 22 22 17.5228 22 12H20Z"></path></svg></button>
     </div>
     <div className="relative flex flex-col items-center justify-center w-full h-1/2 flex-grow border-dashed border-primary border-2">
       <div className="rounded-lg shadow-lg w-full h-full">
@@ -221,11 +224,11 @@ const UploadImage: React.FC = () => {
     </div>
     <div className="w-full flex justify-center flex-col">
     <div className="flex justify-center items-center gap-4 country opacity-0">
-      <span>Select target country:</span> <CountryDropdown /> <span className="text-border">{"(optional)"}</span>
+      <span>Select target country:</span> <CountryDropdown disabled={loading}/> <span className="text-border">{"(optional)"}</span>
     </div>
     <div className="flex justify-center items-center country opacity-0 m-10">
     <label htmlFor="input" className="opacity-0 input font-semibold font-poppins text-lg text-foreground flex justify-start items-center mx-4">Number of Responses :</label>
-    <input type="range" className="mx-4" onChange={(e) => {setResponsesNeeded(Number(e.target.value))}} value={responsesNeeded} min={100} max={1000} step={50}/>
+    <input type="range" disabled={loading} className="mx-4" onChange={(e) => {setResponsesNeeded(Number(e.target.value))}} value={responsesNeeded} min={100} max={1000} step={50}/>
     <span className="text-lg">{`${responsesNeeded}`}</span>
     {/* <button className="submit font-poppins text-foreground hover:scale-[120%] m-20 shadow-[inset_0_0_0_2px_#616467] text-black px-12 py-4 rounded-full tracking-widest uppercase font-bold bg-transparent hover:bg-[#616467] hover:text-white dark:text-neutral-200 transition duration-200">
         {payLoading ? <Spinner/> : `Pay ${responsesNeeded/1000} SOL`}

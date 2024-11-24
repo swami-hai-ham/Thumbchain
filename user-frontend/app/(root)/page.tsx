@@ -16,7 +16,7 @@ const page = (props: Props) => {
   const timeline = gsap.timeline()
   useGSAP(() => {
     const q = gsap.utils.selector(divRef);
-    
+
     // Set initial states using autoAlpha
     gsap.set(q('.yt'), { rotate: -30, autoAlpha: 1, x: -250, y: -250 });
     gsap.set(q('.ctr'), { rotate: 30, autoAlpha: 1, x: 300, y: -250 });

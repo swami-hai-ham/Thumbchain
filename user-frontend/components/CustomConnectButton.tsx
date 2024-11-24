@@ -9,6 +9,7 @@ const CustomConnectButton: React.FC = () => {
   const { setVisible } = useWalletModal();
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const BACKEND_LINK = process.env.NEXT_PUBLIC_BACKEND_LINK;
 
   const handleClick = () => {
     if (connected) {
@@ -42,7 +43,7 @@ const CustomConnectButton: React.FC = () => {
         const signature = await signMessage(message);
         console.log(signature);
         console.log(publicKey);
-        const response = await axios.post(`http://localhost:3003/v1/user/signin`, {
+        const response = await axios.post(`${BACKEND_LINK}/v1/user/signin`, {
             signature,
             publicKey: publicKey.toString(),
             message: customMessage
