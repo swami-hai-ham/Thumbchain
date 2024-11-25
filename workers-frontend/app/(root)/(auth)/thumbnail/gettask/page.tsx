@@ -5,8 +5,9 @@ import { useGSAP } from "@gsap/react";
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import Spinner from "@/components/Spinner";
-import { useDropdownStore, usePendingAmt } from "@/store/dropdown";
+import { usePendingAmt } from "@/store/dropdown";
 import { useToast } from "@/hooks/use-toast";
+import ReCAPTCHA from "react-google-recaptcha";
 
 type ThumbnailOption = {
   id: number;
@@ -30,8 +31,9 @@ const TaskPage = () => {
   const [loading, setLoading] = useState(false);
   const [selection, setSelection] = useState<number | null>(null);
   const router = useRouter();
-  const { countryValue } = useDropdownStore();
+  const RECAPTCHA_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_KEY;
   const BACKEND_LINK = process.env.NEXT_PUBLIC_BACKEND_LINK;
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   let task: Task;
   try {
@@ -63,15 +65,15 @@ const TaskPage = () => {
       } catch (error) {
         console.error("Error validating task:", error);
         toast({
-            title: "Task already done",
-            variant: "destructive",
-            duration: 2000,
-            description: "Make sure you've not submited already",
-            className: "bg-red-500 rounded-xl text-xl",
-          });
+          title: "Task already done",
+          variant: "destructive",
+          duration: 2000,
+          description: "Make sure you've not submited already",
+          className: "bg-red-500 rounded-xl text-xl",
+        });
         setTimeout(() => {
-            router.push('/thumbnail')
-        })
+          router.push("/thumbnail");
+        });
       }
     };
 
@@ -81,6 +83,24 @@ const TaskPage = () => {
   const handleClick = async () => {
     setLoading(true);
     const token = localStorage.getItem("token");
+    const retoken = await recaptchaRef.current?.executeAsync();
+    recaptchaRef.current?.reset();
+
+    if (!retoken) {
+      console.log("Captcha validation failed.");
+      return;
+    }
+
+    const response = await axios.post("/api/verify-recaptcha", {
+      token: retoken,
+    });
+
+    if (response.status == 200) {
+      console.log("Captcha verified");
+    } else {
+      console.log("Captcha verification failed. Please try again.");
+      return;
+    }
     try {
       const body = {
         taskId: `${task?.id}`,
@@ -219,7 +239,12 @@ const TaskPage = () => {
           ))}
         </div>
       )}
-
+      <ReCAPTCHA
+        ref={recaptchaRef}
+        sitekey={RECAPTCHA_KEY!}
+        size="invisible"
+        badge="bottomright"
+      />
       <button
         disabled={loading || selection == null}
         className={`submit opacity-0 font-poppins text-foreground m-20 px-12 py-4 rounded-full tracking-widest uppercase font-bold bg-transparent text-black shadow-[inset_0_0_0_2px_#616467] transition duration-200

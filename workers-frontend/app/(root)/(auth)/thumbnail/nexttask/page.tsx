@@ -7,6 +7,7 @@ import axios from "axios";
 import Spinner from "@/components/Spinner";
 import { useDropdownStore, usePendingAmt } from "@/store/dropdown";
 import { useToast } from "@/hooks/use-toast";
+import ReCAPTCHA from "react-google-recaptcha";
 
 type ThumbnailOption = {
   id: number;
@@ -31,7 +32,9 @@ const TaskPage = () => {
   const [selection, setSelection] = useState<number | null>(null);
   const router = useRouter();
   const { countryValue } = useDropdownStore();
+  const RECAPTCHA_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_KEY;
   const BACKEND_LINK = process.env.NEXT_PUBLIC_BACKEND_LINK;
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   let task: Task;
   try {
@@ -44,6 +47,22 @@ const TaskPage = () => {
   const handleClick = async () => {
     setLoading(true);
     const token = localStorage.getItem("token");
+    const retoken = await recaptchaRef.current?.executeAsync();
+    recaptchaRef.current?.reset();
+
+    if (!retoken) {
+      console.log("Captcha validation failed.");
+      return;
+    }
+
+    const response = await axios.post("/api/verify-recaptcha", { token: retoken });
+
+    if (response.status == 200) {
+      console.log("Captcha verified");
+    } else {
+      console.log("Captcha verification failed. Please try again.");
+      return;
+    }
     try {
       const body = {
         taskId: `${task?.id}`,
@@ -116,29 +135,29 @@ const TaskPage = () => {
   const didAnimate = useRef(false);
 
   useGSAP(() => {
-      const q = gsap.utils.selector(divRef);
-      gsap.fromTo(
-        q(".title"),
-        { autoAlpha: 0, y: -100 },
-        { autoAlpha: 1, y: 0, duration: 1, scale: 1, ease: "bounce.inOut" }
-      );
-      gsap.fromTo(
-        q(".images"),
-        { autoAlpha: 0, scale: 0.5, rotate: -20 },
-        {
-          autoAlpha: 1,
-          scale: 1,
-          stagger: 0.2,
-          duration: 0.5,
-          rotate: 0,
-          ease: "power2.out",
-        }
-      );
-      gsap.fromTo(
-        q(".submit"),
-        { autoAlpha: 0, scale: 0.2 },
-        { autoAlpha: 1, scale: 1.2, duration: 0.5, ease: "power2.out" }
-      );
+    const q = gsap.utils.selector(divRef);
+    gsap.fromTo(
+      q(".title"),
+      { autoAlpha: 0, y: -100 },
+      { autoAlpha: 1, y: 0, duration: 1, scale: 1, ease: "bounce.inOut" }
+    );
+    gsap.fromTo(
+      q(".images"),
+      { autoAlpha: 0, scale: 0.5, rotate: -20 },
+      {
+        autoAlpha: 1,
+        scale: 1,
+        stagger: 0.2,
+        duration: 0.5,
+        rotate: 0,
+        ease: "power2.out",
+      }
+    );
+    gsap.fromTo(
+      q(".submit"),
+      { autoAlpha: 0, scale: 0.2 },
+      { autoAlpha: 1, scale: 1.2, duration: 0.5, ease: "power2.out" }
+    );
   }, [task?.title]);
 
   return (
@@ -199,7 +218,12 @@ const TaskPage = () => {
           ))}
         </div>
       )}
-
+      <ReCAPTCHA
+        ref={recaptchaRef}
+        sitekey={RECAPTCHA_KEY!}
+        size="invisible"
+        badge="bottomright"
+      />
       <button
         disabled={loading || selection == null}
         className={`submit opacity-0 font-poppins text-foreground m-20 px-12 py-4 rounded-full tracking-widest uppercase font-bold bg-transparent text-black shadow-[inset_0_0_0_2px_#616467] transition duration-200
