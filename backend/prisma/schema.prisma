@@ -45,7 +45,6 @@ model Worker{
   id          Int      @id @default(autoincrement())
   address     String   @unique
   submissions Submission[]
-  // responses   Response[]
   pending_amt Int      // amount in lamports 10^6
   locked_amt  Int      // amount in lamports 10^6
   payouts Payouts[]
@@ -69,14 +68,8 @@ model Payouts {
   worker        Worker    @relation(fields: [worker_id], references: [id])
   amount        Int
   signature     String
-  status        TxnStatus
 }
 
-enum TxnStatus {
-  Processing
-  Success
-  Failure
-}
 
 // model Survey {
 //   id        Int        @id @default(autoincrement())

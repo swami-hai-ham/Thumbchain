@@ -1,5 +1,5 @@
 done by link / id jumping task
-- Captcha
+done Captcha
 - payouts table
 - survey backend
 - survey frontend

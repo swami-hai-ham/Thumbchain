@@ -89,11 +89,11 @@ const SideNav = (props: Props) => {
             <img src="/youtube-fill.svg" alt="" />
             <span className='text-foreground font-poppins text-xl'>Thumbnail</span>
             </Link>
-            <Link href={'/submissions'} className='flex justify-center items-center gap-6 sideNavLink opacity-0'>
+            <Link href={'/surveys'} className='flex justify-center items-center gap-6 sideNavLink opacity-0'>
             <img src="/check-fill.svg" alt="" />
             <span className='text-foreground font-poppins text-xl'>Surveys</span>
             </Link>
-            <Link href={'/submissions'} className='flex justify-center items-center gap-6 sideNavLink opacity-0'>
+            <Link href={'/payouts'} className='flex justify-center items-center gap-6 sideNavLink opacity-0'>
             <img src="/btc-fill.svg" alt="" />
             <span className='text-foreground font-poppins text-xl'>Payouts</span>
             </Link>

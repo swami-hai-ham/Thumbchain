@@ -28,7 +28,7 @@ export const columns: ColumnDef<Payment>[] = [
   {
     accessorKey: "amount",
     header: "Amount",
-    enableSorting: true,
+    cell: ({row}) => `${Number(row.original.amount)/1000000} SOL`
   },
   {
     accessorKey: "result",
@@ -38,7 +38,10 @@ export const columns: ColumnDef<Payment>[] = [
   {
     accessorKey: "country",
     header: " Country",
-    enableSorting: true,
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
   },
   {
     accessorKey: "redirectURL",

@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { Router } from "express";
-import z from 'zod'
+import z from "zod";
 import jwt from "jsonwebtoken";
 import { workerMiddleware } from "../middlewares/workerMiddleware";
 import { getNextTask } from "../db";
@@ -83,8 +83,8 @@ workerRouter.post("/checkredir", workerMiddleware, async (req, res) => {
     const workerId = Number(res.locals.workerId);
     const body = req.body;
     const checkInput = z.object({
-      taskId: z.string()
-    })
+      taskId: z.string(),
+    });
     const parsedBody = checkInput.safeParse(body);
 
     if (parsedBody.success) {
@@ -348,14 +348,6 @@ workerRouter.get("/payout", workerMiddleware, async (req, res) => {
       msg: "worker not found",
     });
   } else if (worker.pending_amt == 0) {
-    await prisma.payouts.updateMany({
-      where: {
-        status: "Processing",
-      },
-      data: {
-        status: "Success",
-      },
-    });
     return res.status(400).json({
       msg: "not enough amount to payout",
     });
@@ -381,7 +373,7 @@ workerRouter.get("/payout", workerMiddleware, async (req, res) => {
     const signature = await sendAndConfirmTransaction(connection, transaction, [
       payerKeypair,
     ]);
-    prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx) => {
       await tx.worker.update({
         where: {
           id: workerId,
@@ -400,15 +392,14 @@ workerRouter.get("/payout", workerMiddleware, async (req, res) => {
         data: {
           worker_id: workerId,
           amount: worker?.pending_amt ?? 0,
-          status: "Processing",
-          signature: String(transaction),
+          signature: signature,
         },
       });
       console.log("here");
     });
 
     return res.status(200).json({
-      message: "processing request",
+      message: "Payment done",
       amount: worker?.pending_amt,
     });
   } catch (e) {
@@ -417,4 +408,30 @@ workerRouter.get("/payout", workerMiddleware, async (req, res) => {
     });
   }
 });
+
+workerRouter.get('/payout/bulk', workerMiddleware, async (req, res) => {
+  const workerId = res.locals.workerId;
+
+  try{
+    const payoutTableData = await prisma.payouts.findMany({
+      where: {
+        worker_id: workerId
+      }
+    })
+  
+    if(payoutTableData.length == 0){
+      return res.status(200).json({
+        msg: "Not any data"
+      })
+    }else{
+      return res.status(200).json({
+        payoutTableData
+      })
+    }
+  }catch(e){
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+})
 export default workerRouter;

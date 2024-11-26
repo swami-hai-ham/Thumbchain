@@ -82,7 +82,7 @@ workerRouter.post("/checkredir", workerMiddleware_1.workerMiddleware, (req, res)
         const workerId = Number(res.locals.workerId);
         const body = req.body;
         const checkInput = zod_1.default.object({
-            taskId: zod_1.default.string()
+            taskId: zod_1.default.string(),
         });
         const parsedBody = checkInput.safeParse(body);
         if (parsedBody.success) {
@@ -330,14 +330,6 @@ workerRouter.get("/payout", workerMiddleware_1.workerMiddleware, (req, res) => _
         });
     }
     else if (worker.pending_amt == 0) {
-        yield prisma.payouts.updateMany({
-            where: {
-                status: "Processing",
-            },
-            data: {
-                status: "Success",
-            },
-        });
         return res.status(400).json({
             msg: "not enough amount to payout",
         });
@@ -355,7 +347,7 @@ workerRouter.get("/payout", workerMiddleware_1.workerMiddleware, (req, res) => _
         const signature = yield (0, web3_js_1.sendAndConfirmTransaction)(connection, transaction, [
             payerKeypair,
         ]);
-        prisma.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
+        yield prisma.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
             var _a;
             yield tx.worker.update({
                 where: {
@@ -375,20 +367,44 @@ workerRouter.get("/payout", workerMiddleware_1.workerMiddleware, (req, res) => _
                 data: {
                     worker_id: workerId,
                     amount: (_a = worker === null || worker === void 0 ? void 0 : worker.pending_amt) !== null && _a !== void 0 ? _a : 0,
-                    status: "Processing",
-                    signature: String(transaction),
+                    signature: signature,
                 },
             });
             console.log("here");
         }));
         return res.status(200).json({
-            message: "processing request",
+            message: "Payment done",
             amount: worker === null || worker === void 0 ? void 0 : worker.pending_amt,
         });
     }
     catch (e) {
         res.status(500).json({
             message: "transaction failed",
+        });
+    }
+}));
+workerRouter.get('/payout/bulk', workerMiddleware_1.workerMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const workerId = res.locals.workerId;
+    try {
+        const payoutTableData = yield prisma.payouts.findMany({
+            where: {
+                worker_id: workerId
+            }
+        });
+        if (payoutTableData.length == 0) {
+            return res.status(200).json({
+                msg: "Not any data"
+            });
+        }
+        else {
+            return res.status(200).json({
+                payoutTableData
+            });
+        }
+    }
+    catch (e) {
+        return res.status(500).json({
+            message: "Internal server error",
         });
     }
 }));

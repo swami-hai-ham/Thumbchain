@@ -49,7 +49,7 @@ const page = (props: Props) => {
     try {
       const response = await axios.get(`${BACKEND_LINK}/v1/user/task/bulk`, {
         headers: {
-          Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTcyNTc4OTc2NH0.yotBb3d7q8bkSz-Ztdi0K3hg4fdBXwQbR3i6IZVowCc`,
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
       console.log(response);
