@@ -1,6 +1,6 @@
 done by link / id jumping task
 done Captcha
-- payouts table
+done payouts table
 - survey backend
 - survey frontend
 - Refactor code

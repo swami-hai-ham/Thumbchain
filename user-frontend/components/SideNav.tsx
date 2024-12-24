@@ -22,6 +22,10 @@ const SideNav = (props: Props) => {
             <img src="/youtube-fill.svg" alt="" />
             <span className='text-foreground font-poppins text-xl'>Thumbnail</span>
             </Link>
+            <Link href={'/survey'} className='flex justify-center items-center gap-6 sideNavLink opacity-0'>
+            <img src="/survey-fill.svg" alt="" />
+            <span className='text-foreground font-poppins text-xl'>Survey</span>
+            </Link>
             <Link href={'/tasks'} className='flex justify-center items-center gap-6 sideNavLink opacity-0'>
             <img src="/check-fill.svg" alt="" />
             <span className='text-foreground font-poppins text-xl'>Tasks</span>

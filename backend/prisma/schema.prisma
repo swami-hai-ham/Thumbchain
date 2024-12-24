@@ -70,45 +70,42 @@ model Payouts {
   signature     String
 }
 
+model Survey {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  questions   Question[]
+  responses   Response[]
+}
 
-// model Survey {
-//   id        Int        @id @default(autoincrement())
-//   name      String
-//   questions Question[] 
-//   reponse   Response[]
-// }
+model Question {
+  id          String    @id @default(uuid())
+  formId      String
+  form        Survey      @relation(fields: [formId], references: [id], onDelete: Cascade)
+  type        QuestionType
+  orderId     Int
+  question    String
+  options     String[] // For multiple choice/checkbox options
+  isRequired  Boolean   @default(false)
+  responses   Response[]
+}
 
-// model Question {
-//   id        Int        @id @default(autoincrement())
-//   text      String     
-//   type      QuestionType 
-//   survey    Survey     @relation(fields: [surveyId], references: [id])
-//   surveyId  Int
-//   options   QuesOption[]   
-//   responses Response[]
-// }
+model Response {
+  id          String    @id @default(uuid())
+  questionId  String
+  question    Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  formId      String
+  survey        Survey      @relation(fields: [formId], references: [id], onDelete: Cascade)
+  answer      Json      // Flexible to store text, number, date, etc.
+  createdAt   DateTime  @default(now())
+}
 
-// model QuesOption {
-//   id         Int       @id @default(autoincrement())
-//   text       String   
-//   question   Question  @relation(fields: [questionId], references: [id])
-//   questionId Int
-// }
+enum QuestionType {
+  MULTIPLE_CHOICE
+  CHECKBOXES
+  TEXT
+  DATE
+}
 
-// enum QuestionType {
-//   SINGLE    
-//   MULTIPLE  
-// }
-
-// model Response {
-//   id               Int         @id @default(autoincrement())
-//   surveyId         Int         
-//   questionId       Int         
-//   workerId           Int         
-//   selectedOptions  Int[]       
-//   createdAt        DateTime    @default(now()) 
-
-//   survey           Survey      @relation(fields: [surveyId], references: [id])
-//   question         Question    @relation(fields: [questionId], references: [id])
-//   worker           Worker      @relation(fields: [workerId], references: [id]) // Uncomment if you have a User model
-// }
