@@ -3,8 +3,8 @@ import { Router } from "express";
 import z from "zod";
 import jwt from "jsonwebtoken";
 import { workerMiddleware } from "../middlewares/workerMiddleware";
-import { getNextTask } from "../db";
-import { createSubmissionInput } from "../types";
+import { getNextQuestion, getNextTask } from "../db";
+import { createResponseInput, createSubmissionInput } from "../types";
 import {
   Connection,
   Keypair,
@@ -17,6 +17,7 @@ import {
 import bs58 from "bs58";
 import nacl from "tweetnacl";
 import { signinBodySchema } from "../types";
+import { submissionTask } from "../utils/submissionTask";
 
 const workerRouter = Router();
 const prisma = new PrismaClient();
@@ -29,6 +30,7 @@ const connection = new Connection("https://api.devnet.solana.com", "confirmed");
 const payerSecretKey = bs58.decode(process.env.SECRET_KEY!);
 const payerKeypair = Keypair.fromSecretKey(payerSecretKey);
 
+// Auth
 workerRouter.post("/signin", async (req, res) => {
   const body = req.body;
   const parsedData = signinBodySchema.safeParse(body);
@@ -78,6 +80,7 @@ workerRouter.post("/signin", async (req, res) => {
   }
 });
 
+// Task
 workerRouter.post("/checkredir", workerMiddleware, async (req, res) => {
   try {
     const workerId = Number(res.locals.workerId);
@@ -133,6 +136,10 @@ workerRouter.post("/redirsub", workerMiddleware, async (req, res) => {
             },
           },
         },
+        select: {
+          id: true,
+          amount: true,
+        },
       });
       if (!validtask) {
         return res.status(400).json({
@@ -145,48 +152,14 @@ workerRouter.post("/redirsub", workerMiddleware, async (req, res) => {
       const amountPerResponse = validtask.amount / responsesNeeded; // Amount per response in SOL
       console.log(amountPerResponse);
 
-      const submission = await prisma.$transaction(async (tx) => {
-        // Create the submission
-        const newSubmission = await tx.submission.create({
-          data: {
-            option_id: Number(parsedBody.data.selection),
-            worker_id: workerId,
-            task_id: Number(parsedBody.data.taskId),
-            amount: amountPerResponse,
-          },
-        });
-
-        // Update the worker's pending amount
-        await tx.worker.update({
-          where: {
-            id: workerId,
-          },
-          data: {
-            pending_amt: {
-              increment: Number(amountPerResponse),
-            },
-          },
-        });
-
-        // Check the number of submissions for this task
-        const totalSubmissions = await tx.submission.count({
-          where: { task_id: validtask.id },
-        });
-
-        // Calculate the required responses based on the original task amount
-        const responsesNeeded = (validtask.amount / TOTAL_DECIMALS) * 1000; // Responses needed
-
-        // Update the task's done status if it meets the requirements
-        if (totalSubmissions >= responsesNeeded) {
-          await tx.task.update({
-            where: { id: validtask.id },
-            data: { done: true },
-          });
-        }
-
-        return newSubmission;
-      });
-
+      const submission = await submissionTask(
+        parsedBody.data.selection,
+        parsedBody.data.taskId,
+        workerId,
+        amountPerResponse,
+        validtask.id,
+        validtask.amount
+      );
       return res.status(200).json({
         submission,
       });
@@ -247,48 +220,14 @@ workerRouter.post("/submission", workerMiddleware, async (req, res) => {
       const amountPerResponse = task.amount / responsesNeeded; // Amount per response in SOL
       console.log(amountPerResponse);
 
-      const submission = await prisma.$transaction(async (tx) => {
-        // Create the submission
-        const newSubmission = await tx.submission.create({
-          data: {
-            option_id: Number(parsedBody.data.selection),
-            worker_id: workerId,
-            task_id: Number(parsedBody.data.taskId),
-            amount: amountPerResponse,
-          },
-        });
-
-        // Update the worker's pending amount
-        await tx.worker.update({
-          where: {
-            id: workerId,
-          },
-          data: {
-            pending_amt: {
-              increment: Number(amountPerResponse),
-            },
-          },
-        });
-
-        // Check the number of submissions for this task
-        const totalSubmissions = await tx.submission.count({
-          where: { task_id: task.id },
-        });
-
-        // Calculate the required responses based on the original task amount
-        const responsesNeeded = (task.amount / TOTAL_DECIMALS) * 1000; // Responses needed
-
-        // Update the task's done status if it meets the requirements
-        if (totalSubmissions >= responsesNeeded) {
-          await tx.task.update({
-            where: { id: task.id },
-            data: { done: true },
-          });
-        }
-
-        return newSubmission;
-      });
-
+      const submission = await submissionTask(
+        parsedBody.data.selection,
+        parsedBody.data.taskId,
+        workerId,
+        amountPerResponse,
+        task.id,
+        task.amount
+      );
       const nextTask = await getNextTask({ workerId, country });
       if (!nextTask) {
         return res.status(200).json({
@@ -311,6 +250,203 @@ workerRouter.post("/submission", workerMiddleware, async (req, res) => {
   }
 });
 
+// Survey
+
+workerRouter.get("/checksurvey", workerMiddleware, async (req, res) => {
+  const workerId = Number(res.locals.workerId);
+
+  const surveyWithPartialResponses = await prisma.survey.findFirst({
+    where: {
+      NOT: {
+        questions: {
+          every: {
+            responses: {
+              some: {
+                worker_id: workerId,
+              },
+            },
+          },
+        },
+      },
+    },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      _count: {
+        select: {
+          questions: true,
+        },
+      },
+      questions: {
+        where: {
+          responses: {
+            none: {
+              worker_id: workerId,
+            },
+          },
+        },
+        select: {
+          id: true, // Select the question ID to count them
+        },
+      },
+    },
+  });
+
+  if (surveyWithPartialResponses == null) {
+    const surveyWithNoResponses = await prisma.survey.findFirst({
+      where: {
+        responses: {
+          none: {
+            worker_id: workerId, // Replace workerId with the actual worker's ID
+          },
+        },
+      },
+      select: {
+        title: true,
+        description: true,
+        id: true,
+        _count: {
+          select: {
+            questions: true,
+          },
+        },
+        questions: {
+          where: {
+            responses: {
+              none: {
+                worker_id: workerId,
+              },
+            },
+          },
+          select: {
+            id: true, // Select the question ID to count them
+          },
+        },
+      },
+    });
+    return res.status(200).json({
+      surveyWithNoResponses,
+    });
+  }
+
+  if (!surveyWithPartialResponses) {
+    return res.status(404).json({
+      msg: "No survey found",
+    });
+  }
+
+  return res.status(200).json({
+    surveyWithPartialResponses,
+  });
+});
+
+workerRouter.get("/nextquestion", workerMiddleware, async (req, res) => {
+  try {
+    const workerId = Number(res.locals.workerId);
+    const country = req.query.country ? String(req.query.country) : undefined;
+
+    console.log(workerId);
+    const question = await getNextQuestion({ workerId });
+    console.log(question);
+    if (!question) {
+      return res.status(404).json({
+        msg: "There are no tasks left for you to review",
+      });
+    } else {
+      return res.status(200).json({
+        question,
+      });
+    }
+  } catch (e) {
+    return res.status(500).json({
+      e,
+    });
+  }
+});
+
+workerRouter.post("/response", workerMiddleware, async (req, res) => {
+  const workerId = Number(res.locals.workerId);
+  const body = req.body;
+  const parsedBody = createResponseInput.safeParse(body);
+
+  if (!parsedBody.success) {
+    return res.status(400).json({
+      msg: parsedBody.error,
+    });
+  }
+  const currentQuestion = await getNextQuestion({ workerId });
+
+  if (!(currentQuestion?.id == parsedBody.data?.questionId)) {
+    return res.status(404).json({
+      msg: "No Such Question found",
+    });
+  }
+
+  try {
+    const response = await prisma.$transaction(async (prisma) => {
+      const response = prisma.response.create({
+        data: {
+          questionId: parsedBody.data?.questionId!,
+          formId: parsedBody.data?.formId!,
+          worker_id: workerId,
+          answer: parsedBody.data?.answer!,
+        },
+      });
+
+      const questionCount = await prisma.question.count({
+        where: { formId: currentQuestion.formId },
+      });
+      const responsesCount = await console.log(
+        currentQuestion.orderId,
+        questionCount
+      );
+      if (currentQuestion.orderId == questionCount) {
+        const amount = await prisma.survey.findFirst({
+          where: { id: currentQuestion.formId },
+          select: { amount: true },
+        });
+        const responsesNeeded = (amount!.amount / TOTAL_DECIMALS) * 1000;
+        const amountPerResponse = amount!.amount / responsesNeeded;
+        await prisma.worker.update({
+          where: {
+            id: workerId,
+          },
+          data: {
+            pending_amt: {
+              increment: Number(amountPerResponse),
+            },
+          },
+        });
+        const responsesCount = await prisma.response.count({
+          where: {
+            formId: parsedBody.data?.formId,
+          },
+        });
+        if (questionCount * responsesNeeded == responsesCount) {
+          await prisma.survey.update({
+            where: {
+              id: parsedBody.data.formId,
+            },
+            data: {
+              done: true,
+            },
+          });
+        }
+      }
+
+      return response;
+    });
+
+    return res.status(200).json({ response });
+  } catch (e) {
+    return res.status(500).json({
+      msg: "Internal server error",
+    });
+  }
+});
+
+// User
 workerRouter.get("/balance", workerMiddleware, async (req, res) => {
   const workerId = res.locals.workerId;
   const worker = await prisma.worker.findFirst({
@@ -409,29 +545,29 @@ workerRouter.get("/payout", workerMiddleware, async (req, res) => {
   }
 });
 
-workerRouter.get('/payout/bulk', workerMiddleware, async (req, res) => {
+workerRouter.get("/payout/bulk", workerMiddleware, async (req, res) => {
   const workerId = res.locals.workerId;
 
-  try{
+  try {
     const payoutTableData = await prisma.payouts.findMany({
       where: {
-        worker_id: workerId
-      }
-    })
-  
-    if(payoutTableData.length == 0){
+        worker_id: workerId,
+      },
+    });
+
+    if (payoutTableData.length == 0) {
       return res.status(200).json({
-        msg: "Not any data"
-      })
-    }else{
+        msg: "Not any data",
+      });
+    } else {
       return res.status(200).json({
-        payoutTableData
-      })
+        payoutTableData,
+      });
     }
-  }catch(e){
+  } catch (e) {
     return res.status(500).json({
       message: "Internal server error",
     });
   }
-})
+});
 export default workerRouter;

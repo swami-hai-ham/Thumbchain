@@ -16,58 +16,80 @@ type Props = {
   index: number;
 };
 
-const QuestionContainer = ({type, index}: Props) => {
+const QuestionContainer = ({ type, index }: Props) => {
   const { control, getValues, setValue } = useFormContext();
   const { fields, append, remove } = useFieldArray({
     control: control,
     name: "questions",
   });
   const [selectedType, setSelectedType] = useState<string>(type);
+  // const handleTypeChange = (newType: string) => {
+  //   setSelectedType(newType);
+
+  //   // Remove the current item at the specified index
+  //   remove(index);
+
+  //   // Append a new item with the new type
+  //   append({
+  //     type: newType,
+  //     question: "",
+  //     options: newType === "multichoice" || newType === "checkbox" ? [] : undefined,
+  //     description: newType === "user_input" ? "" : undefined,
+  //   });
+  // };
   const handleTypeChange = (newType: string) => {
-    setSelectedType(newType);
-  
-    // Remove the current item at the specified index
-    remove(index);
-  
-    // Append a new item with the new type
-    append({
+    const currentQuestion = getValues(`questions[${index}]`);
+    setValue(`questions[${index}]`, {
+      ...currentQuestion,
       type: newType,
-      question: "",
-      options: newType === "multichoice" || newType === "checkbox" ? [] : undefined,
-      description: newType === "user_input" ? "" : undefined,
+      options:
+        newType === "user_input" || newType === "date"
+          ? undefined
+          : currentQuestion.options,
+      description:
+        newType === "user_input" || newType === "date"
+          ? currentQuestion.description
+          : undefined,
     });
+    setSelectedType(newType);
   };
-  
-  
+
   const renderQuestionComponent = () => {
     switch (selectedType) {
       case "multichoice":
-        return <Multichoice index={index}/>;
+        return <Multichoice index={index} />;
       case "checkbox":
-        return <Checkbox index={index}/>;
+        return <Checkbox index={index} />;
       case "user_input":
-        return <Uinp index={index}/>;
+        return <Uinp index={index} />;
       case "date":
-        return <DateInp index={index}/>;
+        return <DateInp index={index} />;
       default:
         return null;
     }
   };
   return (
     <div className="w-full h-full p-8 flex justify-center items-center text-foreground border-border border-2 gap-4">
-            {renderQuestionComponent()}
+      {renderQuestionComponent()}
       <div className="flex-[1] h-full border-border border-[1px] flex flex-col justify-center items-center">
         <div className="flex justify-around items-center border-b-[1px] h-full w-full border-border">
           <Tooltip>
             <TooltipTrigger asChild>
               <button
+                type="button"
                 className="p-2 active:scale-90 transition-transform duration-50 py-5"
                 onClick={() => {
                   append({
                     type: "multichoice",
                     question: "",
-                    options: ["", ""],
+                    options: [],
                   });
+                  setTimeout(() => {
+                    window.scrollTo({
+                      top: document.body.scrollHeight,
+                      behavior: "smooth",
+                    });
+                  }, 0);
                 }}
               >
                 <img src="/plus.svg" alt="" />
@@ -79,7 +101,22 @@ const QuestionContainer = ({type, index}: Props) => {
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              <button className="p-2 active:scale-90 transition-transform duration-50 py-5">
+              <button
+                type="button"
+                className="p-2 active:scale-90 transition-transform duration-50 py-5"
+                onClick={() => {
+                  const currentQuestion = getValues(`questions[${index}]`);
+                  append({
+                    ...currentQuestion,
+                  });
+                  setTimeout(() => {
+                    window.scrollTo({
+                      top: document.body.scrollHeight,
+                      behavior: "smooth",
+                    });
+                  }, 0);
+                }}
+              >
                 <img src="/duplicate.svg" alt="" />
               </button>
             </TooltipTrigger>
@@ -90,6 +127,7 @@ const QuestionContainer = ({type, index}: Props) => {
           <Tooltip>
             <TooltipTrigger asChild>
               <button
+                type="button"
                 className="p-2 active:scale-90 transition-transform duration-50 py-5"
                 onClick={() => {
                   remove(index);
@@ -104,7 +142,7 @@ const QuestionContainer = ({type, index}: Props) => {
           </Tooltip>
         </div>
         <div className="flex justify-around flex-col items-start border-b-[1px] h-full w-full border-border">
-        <div className="flex items-center my-8 mx-10">
+          <div className="flex items-center my-8 mx-10">
             <input
               id={`radio-multichoice-${index}`}
               type="radio"

@@ -1,6 +1,5 @@
 "use client";
 import CountryDropdown from "@/components/dropdown/countries";
-import Link from "next/link";
 import React, { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import ShineBorder from "@/components/ui/shine-border";
@@ -10,9 +9,8 @@ import { useDropdownStore } from "@/store/dropdown";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 
-type Props = {};
 
-const page = (props: Props) => {
+const Page = () => {
   const { countryValue } = useDropdownStore();
   const shineBorderRef = useRef<HTMLDivElement | null>(null);
   const headingRef = useRef<HTMLDivElement | null>(null);
@@ -66,7 +64,7 @@ const page = (props: Props) => {
         }
       );
 
-      // Redirect to the next task page
+      // Redirect to the next task Page
       router.push(
         `/thumbnail/nexttask?task=${encodeURIComponent(
           JSON.stringify(response.data.task)
@@ -114,4 +112,4 @@ const page = (props: Props) => {
   );
 };
 
-export default page;
+export default Page;

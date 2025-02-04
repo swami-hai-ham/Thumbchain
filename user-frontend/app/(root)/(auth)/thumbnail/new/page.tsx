@@ -5,7 +5,7 @@ import React from 'react'
 
 type Props = {}
 
-const page = (props: Props) => {
+const Page = (props: Props) => {
   return (
     <div className='relative flex h-full w-full justify-start items-center flex-col border-border border-l-2'>
       <UploadImage />
@@ -13,4 +13,4 @@ const page = (props: Props) => {
   )
 }
 
-export default page
+export default Page

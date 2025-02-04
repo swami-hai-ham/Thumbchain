@@ -1,7 +1,5 @@
-done by link / id jumping task
-done Captcha
-done payouts table
-- survey backend
-- survey frontend
-- Refactor code
-- redis replay prevention
+- create backend for worker survey response
+- create worker frontend for it
+- handle requests with captcha here also
+- make tasks table
+- then done with project

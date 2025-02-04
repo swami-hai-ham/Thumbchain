@@ -3,122 +3,135 @@
 @tailwind utilities;
 
 :root {
-    --background: #1A1A1A; /* Dark Charcoal */
-    --foreground: #F0F0F0; /* Light Gray */
-    
-    --card: #2A2A2A; /* Slightly lighter charcoal for card background */
-    --card-foreground: #F0F0F0; /* Light Gray for text on cards */
-    
-    --popover: #1F1F1F; /* Dark tone for popover background */
-    --popover-foreground: #E5E5E5; /* Slightly lighter gray for text on popovers */
-    
-    --primary: #007BFF; /* Electric Blue */
-    --primary-foreground: #FFFFFF; /* White text on primary buttons */
-    
-    --secondary: #00FF85; /* Neon Green */
-    --secondary-foreground: #FFFFFF; /* White for secondary button text */
-    
-    --muted: #999999; /* Cool Gray */
-    --muted-foreground: #F0F0F0; /* Light Gray for muted elements */
-    
-    --accent: #FF5722; /* Bright Orange */
-    --accent-foreground: #FFFFFF; /* White text on accent elements */
-    
-    --destructive: #FF0000; /* Red for destructive actions */
-    --destructive-foreground: #FFFFFF; /* White text on destructive actions */
-    
-    --border: #4D4D4D; /* Dark gray for borders */
-    --input: #333333; /* Input background */
-    --ring: #00AFFF; /* Electric Blue for focus rings */
-    
-    --chart-1: #007BFF; /* Electric Blue */
-    --chart-2: #00FF85; /* Neon Green */
-    --chart-3: #FF5722; /* Bright Orange */
-    --chart-4: #FF0000; /* Red */
-    --chart-5: #FFDD57; /* Yellow */
+  --background: #1a1a1a; /* Dark Charcoal */
+  --foreground: #f0f0f0; /* Light Gray */
 
-    --radial-gradient: radial-gradient(ellipse at center, rgba(0, 255, 133, 0.2) 0%, transparent 60%);
-  }
-  .glowy-gradient {
-    position: relative;
-    z-index: 1;
-  }
-  
-  .glowy-gradient::before {
+  --card: #2a2a2a; /* Slightly lighter charcoal for card background */
+  --card-foreground: #f0f0f0; /* Light Gray for text on cards */
+
+  --popover: #1f1f1f; /* Dark tone for popover background */
+  --popover-foreground: #e5e5e5; /* Slightly lighter gray for text on popovers */
+
+  --primary: #007bff; /* Electric Blue */
+  --primary-foreground: #ffffff; /* White text on primary buttons */
+
+  --secondary: #00ff85; /* Neon Green */
+  --secondary-foreground: #ffffff; /* White for secondary button text */
+
+  --muted: #999999; /* Cool Gray */
+  --muted-foreground: #f0f0f0; /* Light Gray for muted elements */
+
+  --accent: #ff5722; /* Bright Orange */
+  --accent-foreground: #ffffff; /* White text on accent elements */
+
+  --destructive: #ff0000; /* Red for destructive actions */
+  --destructive-foreground: #ffffff; /* White text on destructive actions */
+
+  --border: #4d4d4d; /* Dark gray for borders */
+  --input: #333333; /* Input background */
+  --ring: #00afff; /* Electric Blue for focus rings */
+
+  --chart-1: #007bff; /* Electric Blue */
+  --chart-2: #00ff85; /* Neon Green */
+  --chart-3: #ff5722; /* Bright Orange */
+  --chart-4: #ff0000; /* Red */
+  --chart-5: #ffdd57; /* Yellow */
+
+  --radial-gradient: radial-gradient(
+    ellipse at center,
+    rgba(0, 255, 133, 0.2) 0%,
+    transparent 60%
+  );
+}
+.glowy-gradient {
+  position: relative;
+  z-index: 1;
+}
+
+.glowy-gradient::before {
+  content: "";
+  position: absolute;
+  top: -10px; /* Adjust position as needed */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100vw;
+  height: 100px; /* Adjust height for the size of the glow */
+  background: radial-gradient(circle, rgba(0, 255, 133, 0.4), transparent 60%);
+  z-index: -1; /* Make sure it stays behind the header */
+  filter: blur(30px); /* Adjust blur for the glow effect */
+}
+
+@layer components {
+  .loader:before,
+  .loader:after {
     content: "";
     position: absolute;
-    top: -10px; /* Adjust position as needed */
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100vw;
-    height: 100px; /* Adjust height for the size of the glow */
-    background: radial-gradient(circle, rgba(0, 255, 133, 0.4), transparent 60%);
-    z-index: -1; /* Make sure it stays behind the header */
-    filter: blur(30px); /* Adjust blur for the glow effect */
-  }
-  
-  @layer components {
-    .loader:before,
-    .loader:after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      transform: rotateX(70deg);
-      animation: spin 1s linear infinite;
-    }
-  
-    .loader:after {
-      color: #FF3D00;
-      transform: rotateY(70deg);
-      animation-delay: 0.4s;
-    }
-  
-    @keyframes spin {
-      0%, 100% {
-        box-shadow: 0.2em 0 0 0 currentcolor;
-      }
-      12% {
-        box-shadow: 0.2em 0.2em 0 0 currentcolor;
-      }
-      25% {
-        box-shadow: 0 0.2em 0 0 currentcolor;
-      }
-      37% {
-        box-shadow: -0.2em 0.2em 0 0 currentcolor;
-      }
-      50% {
-        box-shadow: -0.2em 0 0 0 currentcolor;
-      }
-      62% {
-        box-shadow: -0.2em -0.2em 0 0 currentcolor;
-      }
-      75% {
-        box-shadow: 0 -0.2em 0 0 currentcolor;
-      }
-      87% {
-        box-shadow: 0.2em -0.2em 0 0 currentcolor;
-      }
-    }
-  }
-  
-  .dots-pattern {
-    position: absolute;
-    bottom: 0;
+    top: 0;
     left: 0;
-    right: 0;
-    height: 35px;
-    background: radial-gradient(circle at bottom, rgba(0,255,133,0.5) 0%, rgba(0, 255, 0, 0) 20%);
-    mask-image: radial-gradient(circle at bottom, black 40%, transparent 70%);
-    background-size: 10px 10px;
-    background-repeat: repeat;
-    opacity: 0;
-    transition: opacity 0.3s ease-in-out;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    transform: rotateX(70deg);
+    animation: spin 1s linear infinite;
   }
 
-  .h-24:hover .dots-pattern {
-    opacity: 1;
+  .loader:after {
+    color: #ff3d00;
+    transform: rotateY(70deg);
+    animation-delay: 0.4s;
   }
+
+  @keyframes spin {
+    0%,
+    100% {
+      box-shadow: 0.2em 0 0 0 currentcolor;
+    }
+    12% {
+      box-shadow: 0.2em 0.2em 0 0 currentcolor;
+    }
+    25% {
+      box-shadow: 0 0.2em 0 0 currentcolor;
+    }
+    37% {
+      box-shadow: -0.2em 0.2em 0 0 currentcolor;
+    }
+    50% {
+      box-shadow: -0.2em 0 0 0 currentcolor;
+    }
+    62% {
+      box-shadow: -0.2em -0.2em 0 0 currentcolor;
+    }
+    75% {
+      box-shadow: 0 -0.2em 0 0 currentcolor;
+    }
+    87% {
+      box-shadow: 0.2em -0.2em 0 0 currentcolor;
+    }
+  }
+}
+
+.dots-pattern {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 35px;
+  background: radial-gradient(
+    circle at bottom,
+    rgba(0, 255, 133, 0.5) 0%,
+    rgba(0, 255, 0, 0) 20%
+  );
+  mask-image: radial-gradient(circle at bottom, black 40%, transparent 70%);
+  background-size: 10px 10px;
+  background-repeat: repeat;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.h-24:hover .dots-pattern {
+  opacity: 1;
+}
+/* for date picker */
+.rdp-vhidden {
+  @apply hidden;
+}

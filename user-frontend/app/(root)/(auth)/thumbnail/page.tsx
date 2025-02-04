@@ -36,7 +36,7 @@ gsap.registerPlugin(useGSAP);
 
 type Props = {};
 
-const page = (props: Props) => {
+const Page = (props: Props) => {
   const thumbRef = useRef<HTMLDivElement | null>(null);
   const [data, setData] = useState<Payment[]>();
   const BACKEND_LINK = process.env.NEXT_PUBLIC_BACKEND_LINK;
@@ -140,4 +140,4 @@ const page = (props: Props) => {
   );
 };
 
-export default page;
+export default Page;

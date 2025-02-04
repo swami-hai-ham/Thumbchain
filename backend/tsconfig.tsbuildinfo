@@ -1,0 +1,1 @@
+{"root":["./src/db.ts","./src/index.ts","./src/types.ts","./src/middlewares/usermiddleware.ts","./src/middlewares/workermiddleware.ts","./src/routes/user.ts","./src/routes/worker.ts"],"version":"5.7.2"}

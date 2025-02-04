@@ -32,6 +32,7 @@ const connection = new web3_js_1.Connection("https://api.devnet.solana.com", "co
 // Server's keypair (replace with your actual secret key)
 const payerSecretKey = bs58_1.default.decode(process.env.SECRET_KEY);
 const payerKeypair = web3_js_1.Keypair.fromSecretKey(payerSecretKey);
+// Auth
 workerRouter.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const body = req.body;
     const parsedData = types_2.signinBodySchema.safeParse(body);
@@ -77,6 +78,7 @@ workerRouter.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, fun
         });
     }
 }));
+// Task
 workerRouter.post("/checkredir", workerMiddleware_1.workerMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const workerId = Number(res.locals.workerId);
@@ -294,6 +296,190 @@ workerRouter.post("/submission", workerMiddleware_1.workerMiddleware, (req, res)
         });
     }
 }));
+// Survey
+workerRouter.get("/checksurvey", workerMiddleware_1.workerMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const workerId = Number(res.locals.workerId);
+    const surveyWithPartialResponses = yield prisma.survey.findFirst({
+        where: {
+            NOT: {
+                questions: {
+                    every: {
+                        responses: {
+                            some: {
+                                worker_id: workerId,
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        select: {
+            id: true,
+            title: true,
+            description: true,
+            _count: {
+                select: {
+                    questions: true,
+                },
+            },
+            questions: {
+                where: {
+                    responses: {
+                        none: {
+                            worker_id: workerId,
+                        },
+                    },
+                },
+                select: {
+                    id: true, // Select the question ID to count them
+                },
+            },
+        },
+    });
+    if (surveyWithPartialResponses == null) {
+        const surveyWithNoResponses = yield prisma.survey.findFirst({
+            where: {
+                responses: {
+                    none: {
+                        worker_id: workerId, // Replace workerId with the actual worker's ID
+                    },
+                },
+            },
+            select: {
+                title: true,
+                description: true,
+                id: true,
+                _count: {
+                    select: {
+                        questions: true,
+                    },
+                },
+                questions: {
+                    where: {
+                        responses: {
+                            none: {
+                                worker_id: workerId,
+                            },
+                        },
+                    },
+                    select: {
+                        id: true, // Select the question ID to count them
+                    },
+                },
+            },
+        });
+        return res.status(200).json({
+            surveyWithNoResponses,
+        });
+    }
+    if (!surveyWithPartialResponses) {
+        return res.status(404).json({
+            msg: "No survey found",
+        });
+    }
+    return res.status(200).json({
+        surveyWithPartialResponses,
+    });
+}));
+workerRouter.get("/nextquestion", workerMiddleware_1.workerMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const workerId = Number(res.locals.workerId);
+        const country = req.query.country ? String(req.query.country) : undefined;
+        console.log(workerId);
+        const question = yield (0, db_1.getNextQuestion)({ workerId });
+        console.log(question);
+        if (!question) {
+            return res.status(404).json({
+                msg: "There are no tasks left for you to review",
+            });
+        }
+        else {
+            return res.status(200).json({
+                question,
+            });
+        }
+    }
+    catch (e) {
+        return res.status(500).json({
+            e,
+        });
+    }
+}));
+workerRouter.post("/response", workerMiddleware_1.workerMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const workerId = Number(res.locals.workerId);
+    const body = req.body;
+    const parsedBody = types_1.createResponseInput.safeParse(body);
+    if (!parsedBody.success) {
+        return res.status(400).json({
+            msg: parsedBody.error,
+        });
+    }
+    const currentQuestion = yield (0, db_1.getNextQuestion)({ workerId });
+    if (!((currentQuestion === null || currentQuestion === void 0 ? void 0 : currentQuestion.id) == ((_a = parsedBody.data) === null || _a === void 0 ? void 0 : _a.questionId))) {
+        return res.status(404).json({
+            msg: "No Such Question found",
+        });
+    }
+    try {
+        const response = yield prisma.$transaction((prisma) => __awaiter(void 0, void 0, void 0, function* () {
+            var _a, _b, _c, _d;
+            const response = prisma.response.create({
+                data: {
+                    questionId: (_a = parsedBody.data) === null || _a === void 0 ? void 0 : _a.questionId,
+                    formId: (_b = parsedBody.data) === null || _b === void 0 ? void 0 : _b.formId,
+                    worker_id: workerId,
+                    answer: (_c = parsedBody.data) === null || _c === void 0 ? void 0 : _c.answer,
+                },
+            });
+            const questionCount = yield prisma.question.count({
+                where: { formId: currentQuestion.formId },
+            });
+            const responsesCount = yield console.log(currentQuestion.orderId, questionCount);
+            if (currentQuestion.orderId == questionCount) {
+                const amount = yield prisma.survey.findFirst({
+                    where: { id: currentQuestion.formId },
+                    select: { amount: true },
+                });
+                const responsesNeeded = (amount.amount / TOTAL_DECIMALS) * 1000;
+                const amountPerResponse = amount.amount / responsesNeeded;
+                yield prisma.worker.update({
+                    where: {
+                        id: workerId,
+                    },
+                    data: {
+                        pending_amt: {
+                            increment: Number(amountPerResponse),
+                        },
+                    },
+                });
+                const responsesCount = yield prisma.response.count({
+                    where: {
+                        formId: (_d = parsedBody.data) === null || _d === void 0 ? void 0 : _d.formId,
+                    },
+                });
+                if (questionCount * responsesNeeded == responsesCount) {
+                    yield prisma.survey.update({
+                        where: {
+                            id: parsedBody.data.formId,
+                        },
+                        data: {
+                            done: true,
+                        },
+                    });
+                }
+            }
+            return response;
+        }));
+        return res.status(200).json({ response });
+    }
+    catch (e) {
+        return res.status(500).json({
+            msg: "Internal server error",
+        });
+    }
+}));
+// User
 workerRouter.get("/balance", workerMiddleware_1.workerMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const workerId = res.locals.workerId;
     const worker = yield prisma.worker.findFirst({
@@ -383,22 +569,22 @@ workerRouter.get("/payout", workerMiddleware_1.workerMiddleware, (req, res) => _
         });
     }
 }));
-workerRouter.get('/payout/bulk', workerMiddleware_1.workerMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+workerRouter.get("/payout/bulk", workerMiddleware_1.workerMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const workerId = res.locals.workerId;
     try {
         const payoutTableData = yield prisma.payouts.findMany({
             where: {
-                worker_id: workerId
-            }
+                worker_id: workerId,
+            },
         });
         if (payoutTableData.length == 0) {
             return res.status(200).json({
-                msg: "Not any data"
+                msg: "Not any data",
             });
         }
         else {
             return res.status(200).json({
-                payoutTableData
+                payoutTableData,
             });
         }
     }

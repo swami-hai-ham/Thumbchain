@@ -55,7 +55,9 @@ const TaskPage = () => {
       return;
     }
 
-    const response = await axios.post("/api/verify-recaptcha", { token: retoken });
+    const response = await axios.post("/api/verify-recaptcha", {
+      token: retoken,
+    });
 
     if (response.status == 200) {
       console.log("Captcha verified");
@@ -132,7 +134,7 @@ const TaskPage = () => {
     ? task?.options.slice(Math.ceil(task.options.length / 2))
     : [];
 
-  const didAnimate = useRef(false);
+  // const didAnimate = useRef(false);
 
   useGSAP(() => {
     const q = gsap.utils.selector(divRef);

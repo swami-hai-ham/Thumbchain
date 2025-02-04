@@ -1,13 +1,12 @@
 "use client";
 import { ColumnDef } from "@tanstack/react-table";
-import Link from "next/link";
-import { useState } from "react";
+// import Link from "next/link";
+// import { useState } from "react";
 
 export type Payouts = {
-  amount: number,
-  signature: string
+  amount: number;
+  signature: string;
 };
-
 
 export const columns: ColumnDef<Payouts>[] = [
   {
@@ -18,10 +17,10 @@ export const columns: ColumnDef<Payouts>[] = [
   {
     accessorKey: "amount",
     header: "Amount",
-    cell: ({row}) => `${Number(row.original.amount)/1000000} SOL`
+    cell: ({ row }) => `${Number(row.original.amount) / 1000000} SOL`,
   },
   {
     accessorKey: "signature",
     header: "Signature",
-  }
+  },
 ];

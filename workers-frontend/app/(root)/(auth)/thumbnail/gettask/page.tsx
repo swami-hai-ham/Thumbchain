@@ -153,7 +153,7 @@ const TaskPage = () => {
     ? task?.options.slice(Math.ceil(task.options.length / 2))
     : [];
 
-  const didAnimate = useRef(false);
+  // const didAnimate = useRef(false);
 
   useGSAP(() => {
     const q = gsap.utils.selector(divRef);

@@ -17,6 +17,7 @@ model User{
   id      Int   @id @default(autoincrement())
   address String   @unique
   tasks   Task[]
+  surveys Survey[]
   
 }
 
@@ -45,6 +46,7 @@ model Worker{
   id          Int      @id @default(autoincrement())
   address     String   @unique
   submissions Submission[]
+  responses   Response[]
   pending_amt Int      // amount in lamports 10^6
   locked_amt  Int      // amount in lamports 10^6
   payouts Payouts[]
@@ -72,8 +74,13 @@ model Payouts {
 
 model Survey {
   id          String    @id @default(uuid())
+  user_id     Int
+  user        User      @relation(fields: [user_id], references: [id])
   title       String
   description String?
+  signature   String
+  amount      Int
+  done        Boolean   @default(false)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   questions   Question[]
@@ -87,19 +94,22 @@ model Question {
   type        QuestionType
   orderId     Int
   question    String
-  options     String[] // For multiple choice/checkbox options
-  isRequired  Boolean   @default(false)
+  options     String[] 
+  description String?
   responses   Response[]
 }
 
 model Response {
   id          String    @id @default(uuid())
+  worker_id   Int 
+  worker      Worker @relation(fields: [worker_id], references: [id])
   questionId  String
   question    Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
   formId      String
-  survey        Survey      @relation(fields: [formId], references: [id], onDelete: Cascade)
-  answer      Json      // Flexible to store text, number, date, etc.
+  survey      Survey    @relation(fields: [formId], references: [id], onDelete: Cascade)
+  answer      Json      
   createdAt   DateTime  @default(now())
+  @@unique([worker_id, questionId])
 }
 
 enum QuestionType {

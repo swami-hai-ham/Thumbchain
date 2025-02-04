@@ -4,7 +4,7 @@ import { columns, Payouts } from './columns'
 import { DataTable } from './data-table'
 import axios from 'axios'
 import { useToast } from '@/hooks/use-toast'
-type Props = {}
+
 type PayData = {
   id: number;
   worker_id: number;
@@ -13,7 +13,7 @@ type PayData = {
 }
 
 
-const page = (props: Props) => {
+const Page = () => {
   const BACKEND_LINK = process.env.NEXT_PUBLIC_BACKEND_LINK;
   const { toast } = useToast();
   const [data, setData] = useState<Payouts[]>();
@@ -72,4 +72,4 @@ const page = (props: Props) => {
   )
 }
 
-export default page
+export default Page

@@ -1,6 +1,6 @@
 "use client"
 import RetroGrid from "@/components/ui/retro-grid";
-import React, { useEffect, useRef } from 'react'
+import React, { useRef } from 'react'
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import NavBar from "@/components/NavBar";
@@ -9,9 +9,9 @@ import SplitType from "split-type";
 
 
 gsap.registerPlugin(useGSAP);
-type Props = {}
 
-const page = (props: Props) => {
+
+const Page = () => {
   const divRef = useRef<HTMLDivElement | null>(null)
   const timeline = gsap.timeline()
   useGSAP(() => {
@@ -129,4 +129,4 @@ const page = (props: Props) => {
   )
 }
 
-export default page
+export default Page
