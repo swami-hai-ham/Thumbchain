@@ -2,12 +2,13 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
-import React, { useRef, useState } from "react";
+import React, { useState, useRef } from "react";
 import axios from "axios";
 import Spinner from "@/components/Spinner";
 import { useDropdownStore, usePendingAmt } from "@/store/dropdown";
 import { useToast } from "@/hooks/use-toast";
-import ReCAPTCHA from "react-google-recaptcha";
+import Image from "next/image";
+import { recaptcha_func, useReCAPTCHA } from "@/lib/recaptcha";
 
 type ThumbnailOption = {
   id: number;
@@ -32,10 +33,8 @@ const TaskPage = () => {
   const [selection, setSelection] = useState<number | null>(null);
   const router = useRouter();
   const { countryValue } = useDropdownStore();
-  const RECAPTCHA_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_KEY;
   const BACKEND_LINK = process.env.NEXT_PUBLIC_BACKEND_LINK;
-  const recaptchaRef = useRef<ReCAPTCHA>(null);
-
+  const { recaptchaRef } = useReCAPTCHA();
   let task: Task;
   try {
     task = taskData ? JSON.parse(taskData) : null;
@@ -46,25 +45,8 @@ const TaskPage = () => {
 
   const handleClick = async () => {
     setLoading(true);
+    await recaptcha_func(recaptchaRef);
     const token = localStorage.getItem("token");
-    const retoken = await recaptchaRef.current?.executeAsync();
-    recaptchaRef.current?.reset();
-
-    if (!retoken) {
-      console.log("Captcha validation failed.");
-      return;
-    }
-
-    const response = await axios.post("/api/verify-recaptcha", {
-      token: retoken,
-    });
-
-    if (response.status == 200) {
-      console.log("Captcha verified");
-    } else {
-      console.log("Captcha verification failed. Please try again.");
-      return;
-    }
     try {
       const body = {
         taskId: `${task?.id}`,
@@ -164,7 +146,7 @@ const TaskPage = () => {
 
   return (
     <div
-      className="flex flex-col items-center p-6 h-screen w-full text-foreground"
+      className="flex flex-col items-center p-6 h-full w-full text-foreground"
       ref={divRef}
     >
       <h1 className="text-4xl font-bold font-montserrat my-10 title opacity-0">
@@ -174,14 +156,18 @@ const TaskPage = () => {
       {/* First row of options */}
       <div className="flex justify-between items-center gap-10 w-full mx-5 px-20 my-6">
         {firstRowOptions?.map((option: ThumbnailOption) => (
-          <div key={option.id} className="relative images images opacity-0">
-            <img
+          <div
+            key={option.id}
+            className="relative w-40 h-40 md:w-60 md:h-60 images opacity-0"
+          >
+            <Image
               src={option.image_url}
-              style={{
-                width: "auto",
-                height: "150px",
-              }}
-              className={`shadow-md object-contain rounded-lg transition-transform duration-200 group-hover:scale-105 hover:scale-105 hover:shadow-[0_0_20px_rgba(0,123,255,0.6)] ${
+              fill={true}
+              // style={{
+              //   width: "auto",
+              //   height: "150px",
+              // }}
+              className={`shadow-md rounded-lg object-contain transition-transform duration-200 group-hover:scale-105 hover:scale-105 hover:shadow-[0_0_20px_rgba(0,123,255,0.6)] ${
                 selection === option.id
                   ? "border-2 border-accent transition-all"
                   : ""
@@ -199,14 +185,18 @@ const TaskPage = () => {
       {secondRowOptions && secondRowOptions.length > 0 && (
         <div className="flex justify-between items-center gap-10 w-full mx-5 px-20 my-6">
           {secondRowOptions?.map((option: ThumbnailOption) => (
-            <div key={option.id} className="relative images">
-              <img
+            <div
+              key={option.id}
+              className="relative w-40 h-40 md:w-60 md:h-60 images opacity-0"
+            >
+              <Image
                 src={option.image_url}
-                style={{
-                  width: "auto",
-                  height: "150px",
-                }}
-                className={`shadow-md object-contain rounded-lg transition-transform duration-200 group-hover:scale-105 hover:scale-105 hover:shadow-[0_0_20px_rgba(0,123,255,0.6)] ${
+                // style={{
+                //   // width: "auto",
+                //   height: "150px",
+                // }}
+                fill={true}
+                className={`shadow-md rounded-lg object-contain transition-transform duration-200 group-hover:scale-105 hover:scale-105 hover:shadow-[0_0_20px_rgba(0,123,255,0.6)] ${
                   selection === option.id
                     ? "border-2 border-accent transition-all"
                     : ""
@@ -220,12 +210,6 @@ const TaskPage = () => {
           ))}
         </div>
       )}
-      <ReCAPTCHA
-        ref={recaptchaRef}
-        sitekey={RECAPTCHA_KEY!}
-        size="invisible"
-        badge="bottomright"
-      />
       <button
         disabled={loading || selection == null}
         className={`submit opacity-0 font-poppins text-foreground m-20 px-12 py-4 rounded-full tracking-widest uppercase font-bold bg-transparent text-black shadow-[inset_0_0_0_2px_#616467] transition duration-200

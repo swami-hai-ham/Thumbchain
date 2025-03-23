@@ -1,5 +1,4 @@
-- create backend for worker survey response
-- create worker frontend for it
 - handle requests with captcha here also
+- create functionality on user frontend to make the results of survey export
 - make tasks table
 - then done with project

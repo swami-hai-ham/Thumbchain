@@ -8,6 +8,7 @@ import Spinner from "@/components/Spinner";
 import { usePendingAmt } from "@/store/dropdown";
 import { useToast } from "@/hooks/use-toast";
 import ReCAPTCHA from "react-google-recaptcha";
+import Image from "next/image";
 
 type ThumbnailOption = {
   id: number;
@@ -183,7 +184,7 @@ const TaskPage = () => {
 
   return (
     <div
-      className="flex flex-col items-center p-6 h-screen w-full text-foreground"
+      className="flex flex-col items-center p-6 h-full w-full text-foreground"
       ref={divRef}
     >
       <h1 className="text-4xl font-bold font-montserrat my-10 title opacity-0">
@@ -193,13 +194,17 @@ const TaskPage = () => {
       {/* First row of options */}
       <div className="flex justify-between items-center gap-10 w-full mx-5 px-20 my-6">
         {firstRowOptions?.map((option: ThumbnailOption) => (
-          <div key={option.id} className="relative images images opacity-0">
-            <img
+          <div
+            key={option.id}
+            className="relative w-40 h-40 md:w-60 md:h-60 images opacity-0"
+          >
+            <Image
               src={option.image_url}
-              style={{
-                width: "auto",
-                height: "150px",
-              }}
+              // style={{
+              //   width: "auto",
+              //   height: "150px",
+              // }}
+              fill={true}
               className={`shadow-md object-contain rounded-lg transition-transform duration-200 group-hover:scale-105 hover:scale-105 hover:shadow-[0_0_20px_rgba(0,123,255,0.6)] ${
                 selection === option.id
                   ? "border-2 border-accent transition-all"
@@ -218,13 +223,17 @@ const TaskPage = () => {
       {secondRowOptions && secondRowOptions.length > 0 && (
         <div className="flex justify-between items-center gap-10 w-full mx-5 px-20 my-6">
           {secondRowOptions?.map((option: ThumbnailOption) => (
-            <div key={option.id} className="relative images">
-              <img
+            <div
+              key={option.id}
+              className="relative w-40 h-40 md:w-60 md:h-60 images opacity-0"
+            >
+              <Image
                 src={option.image_url}
-                style={{
-                  width: "auto",
-                  height: "150px",
-                }}
+                // style={{
+                //   width: "auto",
+                //   height: "150px",
+                // }}
+                fill={true}
                 className={`shadow-md object-contain rounded-lg transition-transform duration-200 group-hover:scale-105 hover:scale-105 hover:shadow-[0_0_20px_rgba(0,123,255,0.6)] ${
                   selection === option.id
                     ? "border-2 border-accent transition-all"

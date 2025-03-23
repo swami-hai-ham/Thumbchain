@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useCurrentQuestion } from "@/store/dropdown";
 import { useRouter } from "next/navigation";
 import { formatQuestionType } from "@/lib/func";
+import { recaptcha_func, useReCAPTCHA } from "@/lib/recaptcha";
 
 interface Question {
   question: string;
@@ -22,6 +23,7 @@ const Checkbox = (Ques: Question) => {
   const { toast } = useToast();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const { recaptchaRef } = useReCAPTCHA();
   const handleOptionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
 
@@ -84,6 +86,8 @@ const Checkbox = (Ques: Question) => {
             className="rounded-2xl p-2 border-2 border-border w-32 mx-auto"
             onClick={async () => {
               setLoading(true);
+              console.log("recaptcha");
+              await recaptcha_func(recaptchaRef);
               const body = {
                 questionId: Ques.questionId,
                 formId: Ques.formId,
@@ -114,10 +118,12 @@ const Checkbox = (Ques: Question) => {
                           "token"
                         )}`,
                       },
+                      validateStatus: (status) =>
+                        status === 200 || status === 404,
                     }
                   );
                   if (Question.status == 404) {
-                    router.push("/surveys/tasksdone");
+                    router.push("/surveys/response/tasksdone");
                   } else if (Question.data.question) {
                     setData({
                       question: Question.data.question.question,

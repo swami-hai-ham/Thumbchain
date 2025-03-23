@@ -5,6 +5,7 @@ import axios from "axios";
 import { useCurrentQuestion } from "@/store/dropdown";
 import Multichoice from "./Form/Multichoice";
 import Checkbox from "./Form/Checkbox";
+import { useRouter } from "next/navigation";
 import Uinp from "./Form/Unip";
 import DateInp from "./Form/DateInp";
 
@@ -20,19 +21,21 @@ interface Question {
 
 const SurveyQues = () => {
   const { data, setData } = useCurrentQuestion();
-
+  const router = useRouter();
   const renderQuestionComponent = (question: Question) => {
     // console.log(question);
     switch (question.type) {
       case "MULTIPLE_CHOICE":
         return (
           <Multichoice
-            formId={question.formId}
-            options={question.options}
-            orderId={question.orderId}
-            question={question.question}
-            questionId={question.questionId}
-            type={question.type}
+            Ques={{
+              formId: question.formId,
+              options: question.options,
+              orderId: question.orderId,
+              question: question.question,
+              questionId: question.questionId,
+              type: question.type,
+            }}
           />
         );
       case "CHECKBOXES":
@@ -85,6 +88,7 @@ const SurveyQues = () => {
             headers: {
               Authorization: `Bearer ${token}`,
             },
+            validateStatus: (status) => status === 200 || status === 404,
           }
         );
 
@@ -98,9 +102,11 @@ const SurveyQues = () => {
             formId: response.data.question.formId,
             description: response.data.question.description,
           });
+        } else {
+          router.push("/surveys/response/tasksdone");
         }
       } catch (error) {
-        // console.error("Error fetching the next question:", error);
+        console.error("Error fetching the next question:", error);
       }
     };
 

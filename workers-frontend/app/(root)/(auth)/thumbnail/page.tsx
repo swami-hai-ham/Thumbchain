@@ -9,7 +9,6 @@ import { useDropdownStore } from "@/store/dropdown";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 
-
 const Page = () => {
   const { countryValue } = useDropdownStore();
   const shineBorderRef = useRef<HTMLDivElement | null>(null);
@@ -83,10 +82,10 @@ const Page = () => {
   };
 
   return (
-    <div className="w-full h-1/2 px-10 flex flex-col justify-center items-center text-foreground p-4">
+    <div className="w-full h-1/2 px-10 flex flex-col justify-center items-center text-foreground p-10">
       <ShineBorder
         ref={shineBorderRef}
-        className="shine w-full flex flex-col justify-center items-center bg-background h-full text-foreground opacity-0"
+        className="shine w-full flex flex-col justify-center items-center bg-background h-full text-foreground opacity-0 p-10"
         color={["#4B0082", "#00BFFF", "#00FF7F"]}
         duration={5}
       >

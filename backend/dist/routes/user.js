@@ -17,35 +17,18 @@ const express_1 = require("express");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const userMiddleware_1 = require("../middlewares/userMiddleware");
 const types_1 = require("../types");
-const web3_js_1 = require("@solana/web3.js");
 const tweetnacl_1 = __importDefault(require("tweetnacl"));
 const bs58_1 = __importDefault(require("bs58"));
 const types_2 = require("../types");
+const VerifyTransaction_1 = require("../utils/VerifyTransaction");
+const sigUsage_1 = require("../utils/sigUsage");
 const userRouter = (0, express_1.Router)();
 const prisma = new client_1.PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET;
 const TOTAL_DECIMALS = Number(process.env.TOTAL_DECIMALS) || 1000000; // lamports
-const connection = new web3_js_1.Connection((0, web3_js_1.clusterApiUrl)("devnet"), "confirmed");
-const PARENT_WALLET_ADDRESS = "EobSbVfVHF4CEFurp2QDJjrbRRCowLRrr1EVWPDh89Ju";
-const RETRY_DELAY = 500;
-function getTransactionStatus(signature_1) {
-    return __awaiter(this, arguments, void 0, function* (signature, retryCount = 30) {
-        const status = yield connection.getSignatureStatus(signature);
-        if (status.value === null) {
-            if (retryCount < 10) {
-                console.log(`Transaction status not available. Retrying in ${RETRY_DELAY}ms...`);
-                yield new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
-                return getTransactionStatus(signature, retryCount + 1);
-            }
-            else {
-                throw new Error("Transaction status not available after maximum retries");
-            }
-        }
-        return status;
-    });
-}
 // signin with wallet
 userRouter.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    // Parsing
     const body = req.body;
     const parsedData = types_1.signinBodySchema.safeParse(body);
     if (!parsedData.success) {
@@ -54,12 +37,11 @@ userRouter.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, funct
         });
     }
     const { publicKey, signature, message } = parsedData.data || {};
+    // Verification
     try {
         const publicKeyUint8 = bs58_1.default.decode(publicKey);
         const messageUint8 = new TextEncoder().encode(message);
-        // Verify the signature
-        const isValidSignature = tweetnacl_1.default.sign.detached.verify(messageUint8, new Uint8Array(signature.data), // Assuming signature is sent as Buffer-like object
-        publicKeyUint8);
+        const isValidSignature = tweetnacl_1.default.sign.detached.verify(messageUint8, new Uint8Array(signature.data), publicKeyUint8);
         console.log(isValidSignature);
         if (isValidSignature) {
             const user = yield prisma.user.upsert({
@@ -72,15 +54,18 @@ userRouter.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, funct
                 },
             });
             const token = jsonwebtoken_1.default.sign({ userId: user.id }, JWT_SECRET);
+            // Success
             return res.status(200).json({
                 token,
             });
         }
         else {
+            // Failure
             return res.status(400).json({
                 message: "InvalidSignature",
             });
         }
+        // Try Catch Err
     }
     catch (e) {
         return res.status(500).json({
@@ -88,9 +73,8 @@ userRouter.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, funct
         });
     }
 }));
-// In userRouter
 userRouter.post("/task", userMiddleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+    // Parsing
     const body = req.body;
     const userId = res.locals.userId;
     try {
@@ -102,64 +86,21 @@ userRouter.post("/task", userMiddleware_1.userMiddleware, (req, res) => __awaite
         }
         console.log("parsedData: ", parsedData);
         const { responsesNeeded, signature } = parsedData.data;
-        const user = yield prisma.user.findFirst({
-            where: {
-                id: userId,
-            },
-        });
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
+        // User Existence and signature usage test
+        try {
+            const user = yield (0, sigUsage_1.sigUsage)(signature, userId);
+            // transaction verification
+            yield (0, VerifyTransaction_1.verifyTransaction)(signature, res, responsesNeeded, user.address);
         }
-        const transaction = yield connection.getTransaction(signature, {
-            maxSupportedTransactionVersion: 1,
-        });
-        console.log("transaction: ", transaction);
-        if (!transaction) {
-            return res.status(404).json({ message: "Transaction not found" });
+        catch (error) {
+            if (error instanceof Error) {
+                res.status(400).json({ message: error.message });
+            }
+            else {
+                res.status(400).json({ message: "An unknown error occurred" });
+            }
         }
-        const status = yield getTransactionStatus(signature);
-        console.log("status: ", status);
-        //check if txnValid
-        // const isValid = await connection.confirmTransaction(signature, "confirmed");
-        //     if (!isValid) {
-        //         return res.status(411).json({ message: "Invalid transaction signature" });
-        // }
-        // console.log(isValid)
-        const currentTime = new Date().getTime() / 1000;
-        if ((transaction === null || transaction === void 0 ? void 0 : transaction.blockTime) && currentTime - (transaction === null || transaction === void 0 ? void 0 : transaction.blockTime) > 300) {
-            return res.status(411).json({ message: "Transaction is too old" });
-        }
-        console.log("currentTime:", currentTime);
-        const transferAmount = transaction.meta.postBalances[1] - transaction.meta.preBalances[1];
-        if (transferAmount !== (responsesNeeded / 1000) * web3_js_1.LAMPORTS_PER_SOL) {
-            return res.status(411).json({ message: "Incorrect transaction amount" });
-        }
-        console.log("transferAmount: ", transferAmount);
-        const senderAddress = (_a = transaction === null || transaction === void 0 ? void 0 : transaction.transaction.message.getAccountKeys().get(0)) === null || _a === void 0 ? void 0 : _a.toString();
-        const recipientAddress = (_b = transaction === null || transaction === void 0 ? void 0 : transaction.transaction.message.getAccountKeys().get(1)) === null || _b === void 0 ? void 0 : _b.toString();
-        console.log(senderAddress, recipientAddress, "address");
-        if (senderAddress !== user.address) {
-            return res
-                .status(411)
-                .json({ message: "Transaction not sent from user's address" });
-        }
-        if (recipientAddress !== PARENT_WALLET_ADDRESS) {
-            return res
-                .status(411)
-                .json({ message: "Transaction not sent to correct address" });
-        }
-        const existingTask = yield prisma.task.findFirst({
-            where: { signature: signature },
-        });
-        if (existingTask) {
-            return res
-                .status(409)
-                .json({ message: "This transaction has already been used" });
-        }
-        console.log("Transfer amount:", transferAmount);
-        console.log("Expected amount:", (responsesNeeded / 1000) * web3_js_1.LAMPORTS_PER_SOL);
-        console.log("Sender address:", senderAddress);
-        console.log("Recipient address:", recipientAddress);
+        // task creation
         let response = yield prisma.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
             const response = yield tx.task.create({
                 data: {
@@ -191,7 +132,6 @@ userRouter.post("/task", userMiddleware_1.userMiddleware, (req, res) => __awaite
     }
 }));
 userRouter.post("/survey", userMiddleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
     const body = req.body;
     console.log(body);
     const userId = res.locals.userId;
@@ -204,81 +144,21 @@ userRouter.post("/survey", userMiddleware_1.userMiddleware, (req, res) => __awai
         }
         console.log("parsedData: ", parsedData);
         const { survey, questions, signature, responsesNeeded, country } = parsedData.data;
-        const user = yield prisma.user.findFirst({
-            where: {
-                id: userId,
-            },
-        });
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
+        // User Existence and signature usage test
         try {
-            const transaction = yield connection.getTransaction(signature, {
-                maxSupportedTransactionVersion: 1,
-            });
-            // If the transaction is null or undefined, return 400 response
-            if (!transaction) {
-                return res.status(400).json({
-                    error: "Transaction not found",
-                });
-            }
-            console.log("transaction: ", transaction);
-            if (!transaction) {
-                return res.status(404).json({ message: "Transaction not found" });
-            }
-            const status = yield getTransactionStatus(signature);
-            console.log("status: ", status);
-            //check if txnValid
-            // const isValid = await connection.confirmTransaction(signature, "confirmed");
-            //     if (!isValid) {
-            //         return res.status(411).json({ message: "Invalid transaction signature" });
-            // }
-            // console.log(isValid)
-            const currentTime = new Date().getTime() / 1000;
-            if ((transaction === null || transaction === void 0 ? void 0 : transaction.blockTime) &&
-                currentTime - (transaction === null || transaction === void 0 ? void 0 : transaction.blockTime) > 300) {
-                return res.status(411).json({ message: "Transaction is too old" });
-            }
-            console.log("currentTime:", currentTime);
-            const transferAmount = transaction.meta.postBalances[1] - transaction.meta.preBalances[1];
-            if (transferAmount !== (responsesNeeded / 1000) * web3_js_1.LAMPORTS_PER_SOL) {
-                return res
-                    .status(411)
-                    .json({ message: "Incorrect transaction amount" });
-            }
-            console.log("transferAmount: ", transferAmount);
-            const senderAddress = (_a = transaction === null || transaction === void 0 ? void 0 : transaction.transaction.message.getAccountKeys().get(0)) === null || _a === void 0 ? void 0 : _a.toString();
-            const recipientAddress = (_b = transaction === null || transaction === void 0 ? void 0 : transaction.transaction.message.getAccountKeys().get(1)) === null || _b === void 0 ? void 0 : _b.toString();
-            console.log(senderAddress, recipientAddress, "address");
-            if (senderAddress !== user.address) {
-                return res
-                    .status(411)
-                    .json({ message: "Transaction not sent from user's address" });
-            }
-            if (recipientAddress !== PARENT_WALLET_ADDRESS) {
-                return res
-                    .status(411)
-                    .json({ message: "Transaction not sent to correct address" });
-            }
-            const existingTask = yield prisma.task.findFirst({
-                where: { signature: signature },
-            });
-            if (existingTask) {
-                return res
-                    .status(409)
-                    .json({ message: "This transaction has already been used" });
-            }
-            console.log("Transfer amount:", transferAmount);
-            console.log("Expected amount:", (responsesNeeded / 1000) * web3_js_1.LAMPORTS_PER_SOL);
-            console.log("Sender address:", senderAddress);
-            console.log("Recipient address:", recipientAddress);
+            const user = yield (0, sigUsage_1.sigUsage)(signature, userId);
+            // transaction verification
+            yield (0, VerifyTransaction_1.verifyTransaction)(signature, res, responsesNeeded, user.address);
         }
         catch (error) {
-            console.error("Error fetching transaction:", error);
-            return res.status(400).json({
-                error: "invalid transaction signature",
-            });
+            if (error instanceof Error) {
+                res.status(400).json({ message: error.message });
+            }
+            else {
+                res.status(400).json({ message: "An unknown error occurred" });
+            }
         }
+        // task creation
         const createdSurvey = yield prisma.survey.create({
             data: {
                 user_id: userId,
@@ -337,6 +217,7 @@ userRouter.post("/survey", userMiddleware_1.userMiddleware, (req, res) => __awai
         });
     }
 }));
+// to get tasks in bulk
 userRouter.get("/task/bulk", userMiddleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = res.locals.userId;
     try {

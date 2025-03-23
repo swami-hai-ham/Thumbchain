@@ -1,10 +1,10 @@
 "use client";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useCurrentQuestion, useSurveyId } from "@/store/dropdown";
 import Spinner from "./Spinner";
 import { Progress } from "@/components/ui/progress"; // Importing the Progress component
+import { useRouter } from "next/navigation";
 
 interface survey {
   title: string;
@@ -18,8 +18,8 @@ interface survey {
 
 const Surveytitdes = () => {
   const [survey, setSurvey] = useState<survey | null>(null);
-  const { id, setId } = useSurveyId();
   const router = useRouter();
+  const { id, setId } = useSurveyId();
   const { data, setData } = useCurrentQuestion();
   const [error, setError] = useState("");
   const [progress, setProgress] = useState(0); // State to track progress
@@ -35,6 +35,7 @@ const Surveytitdes = () => {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
             },
+            validateStatus: (status) => status === 200 || status === 404,
           }
         );
         if (response.data.surveyWithNoResponses) {
@@ -45,6 +46,7 @@ const Surveytitdes = () => {
           setId(response.data.surveyWithPartialResponses.id);
         } else {
           setError("No survey found");
+          router.push("/surveys/response/tasksdone");
         }
       } catch (err) {
         console.log(err);

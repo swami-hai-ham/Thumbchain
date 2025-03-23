@@ -23,6 +23,7 @@ const web3_js_1 = require("@solana/web3.js");
 const bs58_1 = __importDefault(require("bs58"));
 const tweetnacl_1 = __importDefault(require("tweetnacl"));
 const types_2 = require("../types");
+const submissionTask_1 = require("../utils/submissionTask");
 const workerRouter = (0, express_1.Router)();
 const prisma = new client_1.PrismaClient();
 const JWT_SECRET = process.env.WORKER_JWT_SECRET;
@@ -133,6 +134,10 @@ workerRouter.post("/redirsub", workerMiddleware_1.workerMiddleware, (req, res) =
                         },
                     },
                 },
+                select: {
+                    id: true,
+                    amount: true,
+                },
             });
             if (!validtask) {
                 return res.status(400).json({
@@ -143,42 +148,7 @@ workerRouter.post("/redirsub", workerMiddleware_1.workerMiddleware, (req, res) =
             console.log(responsesNeeded); // Convert total lamports to SOL and calculate responses needed
             const amountPerResponse = validtask.amount / responsesNeeded; // Amount per response in SOL
             console.log(amountPerResponse);
-            const submission = yield prisma.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
-                // Create the submission
-                const newSubmission = yield tx.submission.create({
-                    data: {
-                        option_id: Number(parsedBody.data.selection),
-                        worker_id: workerId,
-                        task_id: Number(parsedBody.data.taskId),
-                        amount: amountPerResponse,
-                    },
-                });
-                // Update the worker's pending amount
-                yield tx.worker.update({
-                    where: {
-                        id: workerId,
-                    },
-                    data: {
-                        pending_amt: {
-                            increment: Number(amountPerResponse),
-                        },
-                    },
-                });
-                // Check the number of submissions for this task
-                const totalSubmissions = yield tx.submission.count({
-                    where: { task_id: validtask.id },
-                });
-                // Calculate the required responses based on the original task amount
-                const responsesNeeded = (validtask.amount / TOTAL_DECIMALS) * 1000; // Responses needed
-                // Update the task's done status if it meets the requirements
-                if (totalSubmissions >= responsesNeeded) {
-                    yield tx.task.update({
-                        where: { id: validtask.id },
-                        data: { done: true },
-                    });
-                }
-                return newSubmission;
-            }));
+            const submission = yield (0, submissionTask_1.submissionTask)(parsedBody.data.selection, parsedBody.data.taskId, workerId, amountPerResponse, validtask.id, validtask.amount);
             return res.status(200).json({
                 submission,
             });
@@ -236,42 +206,7 @@ workerRouter.post("/submission", workerMiddleware_1.workerMiddleware, (req, res)
             console.log(responsesNeeded); // Convert total lamports to SOL and calculate responses needed
             const amountPerResponse = task.amount / responsesNeeded; // Amount per response in SOL
             console.log(amountPerResponse);
-            const submission = yield prisma.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
-                // Create the submission
-                const newSubmission = yield tx.submission.create({
-                    data: {
-                        option_id: Number(parsedBody.data.selection),
-                        worker_id: workerId,
-                        task_id: Number(parsedBody.data.taskId),
-                        amount: amountPerResponse,
-                    },
-                });
-                // Update the worker's pending amount
-                yield tx.worker.update({
-                    where: {
-                        id: workerId,
-                    },
-                    data: {
-                        pending_amt: {
-                            increment: Number(amountPerResponse),
-                        },
-                    },
-                });
-                // Check the number of submissions for this task
-                const totalSubmissions = yield tx.submission.count({
-                    where: { task_id: task.id },
-                });
-                // Calculate the required responses based on the original task amount
-                const responsesNeeded = (task.amount / TOTAL_DECIMALS) * 1000; // Responses needed
-                // Update the task's done status if it meets the requirements
-                if (totalSubmissions >= responsesNeeded) {
-                    yield tx.task.update({
-                        where: { id: task.id },
-                        data: { done: true },
-                    });
-                }
-                return newSubmission;
-            }));
+            const submission = yield (0, submissionTask_1.submissionTask)(parsedBody.data.selection, parsedBody.data.taskId, workerId, amountPerResponse, task.id, task.amount);
             const nextTask = yield (0, db_1.getNextTask)({ workerId, country });
             if (!nextTask) {
                 return res.status(200).json({

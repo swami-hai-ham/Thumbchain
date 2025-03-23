@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useCurrentQuestion } from "@/store/dropdown";
 import { useRouter } from "next/navigation";
 import { formatQuestionType } from "@/lib/func";
+import { recaptcha_func, useReCAPTCHA } from "@/lib/recaptcha";
 
 interface Question {
   question: string;
@@ -31,6 +32,7 @@ const DateInp = (Ques: Question) => {
   const { toast } = useToast();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const { recaptchaRef } = useReCAPTCHA();
 
   const handleDateChange = (selectedDate: Date | undefined) => {
     if (selectedDate) {
@@ -42,12 +44,7 @@ const DateInp = (Ques: Question) => {
 
   return (
     <div className=" m-10 flex-[3] h-full p-2 border-border border-[1px]">
-      <div
-        className="Date flex flex-col gap-3 m-4"
-        onClick={() => {
-          console.log(isoDate);
-        }}
-      >
+      <div className="Date flex flex-col gap-3 m-4">
         <div className="flex justify-between items-center">
           <div className="flex justify-center items-center gap-5">
             <span className="text-2xl text-primary">Question:</span>{" "}
@@ -94,14 +91,15 @@ const DateInp = (Ques: Question) => {
             disabled={!isoDate}
             className="rounded-2xl p-2 border-2 border-border w-32 mx-auto"
             onClick={async () => {
-              setLoading(true);
-              const body = {
-                questionId: Ques.questionId,
-                formId: Ques.formId,
-                type: Ques.type,
-                answer: isoDate,
-              };
               try {
+                setLoading(true);
+                await recaptcha_func(recaptchaRef);
+                const body = {
+                  questionId: Ques.questionId,
+                  formId: Ques.formId,
+                  type: Ques.type,
+                  answer: isoDate,
+                };
                 const response = await axios.post(
                   `${process.env.NEXT_PUBLIC_BACKEND_LINK}/v1/worker/response`,
                   body,
@@ -125,10 +123,12 @@ const DateInp = (Ques: Question) => {
                           "token"
                         )}`,
                       },
+                      validateStatus: (status) =>
+                        status === 200 || status === 404,
                     }
                   );
                   if (Question.status == 404) {
-                    router.push("/surveys/tasksdone");
+                    router.push("/surveys/response/tasksdone");
                   } else if (Question.data.question) {
                     setData({
                       question: Question.data.question.question,
@@ -148,8 +148,9 @@ const DateInp = (Ques: Question) => {
                   variant: "destructive",
                   className: "bg-red-500 rounded-xl text-xl",
                 });
+              } finally {
+                setLoading(false);
               }
-              setLoading(false);
             }}
             type="button"
           >

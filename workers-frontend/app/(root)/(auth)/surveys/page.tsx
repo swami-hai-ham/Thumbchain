@@ -1,12 +1,15 @@
+import Link from "next/link";
 import React from "react";
-import Surveytitdes from "@/components/Surveytitdes";
-import SurveyQues from "@/components/SurveyQues";
 
 const page = () => {
   return (
-    <div className="text-foreground w-full h-full">
-      <Surveytitdes />
-      <SurveyQues />
+    <div className="flex justify-center items-center h-screen w-full">
+      <Link
+        href={"/surveys/response"}
+        className="p-4 font-poppins text-foreground bg-primary rounded-xl"
+      >
+        Start Survey
+      </Link>
     </div>
   );
 };
