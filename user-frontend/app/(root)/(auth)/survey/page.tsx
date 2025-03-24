@@ -5,7 +5,7 @@ import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import ShineBorder from "@/components/magicui/shine-border";
 import { DataTable } from "./data-table";
-import { Payment, columns } from "./columns";
+import { Data, columns } from "./columns";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { useToast } from "@/hooks/use-toast";
@@ -28,8 +28,6 @@ interface TaskType {
   signature: string;
   done: boolean;
   amount: number;
-  options: OptionType[];
-  country: string;
 }
 
 gsap.registerPlugin(useGSAP);
@@ -38,7 +36,7 @@ type Props = {};
 
 const Page = (props: Props) => {
   const thumbRef = useRef<HTMLDivElement | null>(null);
-  const [data, setData] = useState<Payment[]>();
+  const [data, setData] = useState<Data[]>();
   const BACKEND_LINK = process.env.NEXT_PUBLIC_BACKEND_LINK;
   const FRONTEND_LINK = process.env.NEXT_PUBLIC_FRONTEND_LINK;
   const WORKER_FRONTEND_LINK = process.env.NEXT_PUBLIC_WORKER_FRONTEND_LINK;
@@ -47,34 +45,28 @@ const Page = (props: Props) => {
   const router = useRouter();
   const getData = async () => {
     try {
-      const response = await axios.get(`${BACKEND_LINK}/v1/user/task/bulk`, {
+      const response = await axios.get(`${BACKEND_LINK}/v1/user/survey/bulk`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
       console.log(response);
-      const data: TaskType[] = await response.data;
-      const result: Payment[] = data.map((task: TaskType) => ({
+      const data: TaskType[] = await response.data.responses;
+      const result: Data[] = data.map((task: TaskType) => ({
         id: task.id,
         title: task.title,
         status: task.done ? "Done" : "Pending",
         amount: task.amount,
-        result: `${FRONTEND_LINK}/thumbnail/task/${task.id}`,
-        country: task.country
-          ? task.country.charAt(0).toUpperCase() +
-            task.country.slice(1).toLowerCase()
-          : "None",
-        redirectURL: `${WORKER_FRONTEND_LINK}/thumbnail/gettask?task=${encodeURIComponent(
-          JSON.stringify(task)
-        )}`,
+        result: "haha",
       }));
       setData(result);
       console.log(result);
     } catch (e: any) {
+      console.log(e);
       toast({
         title: e.code,
         variant: "destructive",
-        description: "Internal server error",
+        description: "Internal Server Error",
         className: "bg-red-500 rounded-xl text-xl",
       });
     }

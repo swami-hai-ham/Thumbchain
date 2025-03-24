@@ -1,19 +1,45 @@
 "use client";
 import { ColumnDef } from "@tanstack/react-table";
-import Link from "next/link";
-import { useState } from "react";
+import axios from "axios";
+import { parse } from "json2csv";
 
-export type Payment = {
+export type Data = {
   id: number;
   title: string;
   status: "Done" | "Pending";
-  result: string;
   amount: number;
-  country: string;
-  redirectURL: string;
 };
 
-export const columns: ColumnDef<Payment>[] = [
+const generateCSV = async (surveyId: string) => {
+  const BACKEND_LINK = process.env.NEXT_PUBLIC_BACKEND_LINK;
+  const token = localStorage.getItem("token");
+  surveyId = surveyId.replace(/^"|"$/g, "");
+  if (!token) return alert("No auth token found!");
+  console.log(`${BACKEND_LINK}/v1/user/survey/csvdata/${surveyId}`);
+  const res = await axios.get(
+    `${BACKEND_LINK}/v1/user/survey/csvdata/${surveyId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  console.log(res);
+
+  const csv = parse(res.data.csvData);
+  const blob = new Blob([csv], { type: "text/csv" });
+
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `survey_${surveyId}_responses.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
+};
+
+export const columns: ColumnDef<Data>[] = [
   {
     accessorKey: "id",
     header: "ID",
@@ -32,41 +58,14 @@ export const columns: ColumnDef<Payment>[] = [
   {
     accessorKey: "result",
     header: "Result",
-    cell: ({ row }) => <Link href={row.original.result}>View Result</Link>,
-  },
-  {
-    accessorKey: "country",
-    header: " Country",
+    cell: ({ row }) => (
+      <button onClick={() => generateCSV(JSON.stringify(row.original.id))}>
+        Download CSV
+      </button>
+    ),
   },
   {
     accessorKey: "status",
     header: "Status",
-  },
-  {
-    accessorKey: "redirectURL",
-    header: "Copy Link",
-    cell: function CopyLinkCell({ row }) {
-      // ✅ Component starts with uppercase letter
-      const [clicked, setClicked] = useState(false);
-
-      const copyLink = async (url: string) => {
-        try {
-          await navigator.clipboard.writeText(url);
-          setClicked(true);
-          setTimeout(() => setClicked(false), 500);
-        } catch (error) {
-          console.error("Failed to copy text: ", error);
-        }
-      };
-
-      return (
-        <button
-          onClick={() => copyLink(row.original.redirectURL)}
-          className="text-white"
-        >
-          {clicked ? "Copied!" : "Copy link"}
-        </button>
-      );
-    },
   },
 ];

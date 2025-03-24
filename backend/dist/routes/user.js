@@ -288,4 +288,35 @@ userRouter.get("/task/:taskId", userMiddleware_1.userMiddleware, (req, res) => _
         });
     }
 }));
+userRouter.get("/survey/csvdata/:surveyId", userMiddleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const surveyId = req.params.surveyId;
+    const responses = yield prisma.response.findMany({
+        where: { formId: surveyId },
+        include: {
+            survey: true,
+            question: true,
+            worker: true,
+        },
+    });
+    console.log(responses);
+    // Transform data for CSV
+    const csvData = responses.map((res) => ({
+        SurveyID: res.formId,
+        QuestionID: res.questionId,
+        WorkerID: res.worker_id,
+        Qtype: res.question.type,
+        Question: res.question.question,
+        Answer: Array.isArray(res.answer) ? res.answer.join(", ") : res.answer,
+    }));
+    return res.status(200).json({ csvData });
+}));
+userRouter.get("/survey/bulk", userMiddleware_1.userMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = res.locals.userId;
+    const responses = yield prisma.survey.findMany({
+        where: {
+            user_id: userId,
+        },
+    });
+    return res.status(200).json({ responses });
+}));
 exports.default = userRouter;
