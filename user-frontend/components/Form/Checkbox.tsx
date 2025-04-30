@@ -49,7 +49,7 @@ const Checkbox = (props: Props) => {
                   {...field}
                   type="text"
                   placeholder="Question"
-                  className="text-foreground border-border placeholder:text-border !text-xl w-full h-full"
+                  className="text-foreground border-border placeholder:text-border text-md w-full h-full p-2"
                 />
               )}
             />
@@ -71,10 +71,10 @@ const Checkbox = (props: Props) => {
                         onChange={(e) => {
                           setNewOption(e.target.value); // Update the input's state directly
                         }}
-                        className="text-foreground border-border placeholder:text-border !text-lg w-full h-full"
+                        className="text-foreground border-border placeholder:text-border text-md w-full h-full p-2"
                       />
                       <button
-                        className="active:scale-90 transition-transform duration-50 text-foreground bg-accent px-4 py-2"
+                        className="active:scale-90 transition-transform duration-50 text-foreground bg-accent px-4 py-2 text-md rounded-md"
                         type="button"
                         onClick={() => {
                           handleAddOption();
@@ -94,7 +94,7 @@ const Checkbox = (props: Props) => {
                         />
                         <label
                           htmlFor="default-checkbox"
-                          className="ms-2 text-xl font-medium text-foreground dark:text-background flex justify-between w-full items-center"
+                          className="ms-2 text-md font-medium text-foreground dark:text-background flex justify-between w-full items-center p-2"
                         >
                           {op}
                           {

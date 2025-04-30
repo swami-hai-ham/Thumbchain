@@ -82,7 +82,7 @@ const Page = (props: Props) => {
       toast({
         title: "Invalid Form Data",
         description: "Fix errors before submission.",
-        className: "bg-red-500 rounded-xl text-xl",
+        className: "bg-red-500 rounded-xltext-md",
         variant: "destructive",
       });
       return;
@@ -122,7 +122,7 @@ const Page = (props: Props) => {
         toast({
           title: "Transaction Denied",
           description: "You rejected the transaction request.",
-          className: "bg-yellow-500 rounded-xl text-xl",
+          className: "bg-yellow-500 rounded-xltext-md",
         });
         setLoading(false);
       } else {
@@ -130,7 +130,7 @@ const Page = (props: Props) => {
           title: "Transaction Error",
           description: e?.message || "An unexpected error occurred.",
           variant: "destructive",
-          className: "bg-red-500 rounded-xl text-xl",
+          className: "bg-red-500 rounded-xltext-md",
         });
       }
       setLoading(false);
@@ -173,7 +173,7 @@ const Page = (props: Props) => {
       toast({
         title: "Transaction successful",
         description: `Signature: ${signature}`,
-        className: "bg-green-500 rounded-xl text-xl",
+        className: "bg-green-500 rounded-xltext-md",
         duration: 3000,
       });
       setLoading(false);
@@ -183,7 +183,7 @@ const Page = (props: Props) => {
         title: e.code,
         variant: "destructive",
         description: e.message,
-        className: "bg-red-500 rounded-xl text-xl",
+        className: "bg-red-500 rounded-xltext-md",
       });
       setLoading(false);
       console.log(e);
@@ -222,7 +222,7 @@ const Page = (props: Props) => {
                 control={methods.control}
                 render={({ field }) => (
                   <Input
-                    className="text-foreground border-border placeholder:text-border p-4 px-10 !text-3xl w-full h-full"
+                    className="text-foreground border-border placeholder:text-border p-4 px-10 !text-xl w-full h-full"
                     type="text"
                     placeholder="Survey title"
                     {...field}
@@ -239,7 +239,7 @@ const Page = (props: Props) => {
                 render={({ field }) => (
                   <Textarea
                     placeholder="Survey Description"
-                    className="text-foreground border-border placeholder:text-border p-4 px-10 !text-xl w-full h-full"
+                    className="text-foreground border-border placeholder:text-border p-4 px-10 text-lg w-full h-full"
                     {...field}
                   />
                 )}
@@ -256,7 +256,7 @@ const Page = (props: Props) => {
                   options: [],
                 });
               }}
-              className="bg-accent text-xl p-4 text-foreground rounded-xl"
+              className="bg-accent text-md p-2 text-foreground rounded-md"
             >
               Add Question
             </button>
@@ -295,15 +295,10 @@ const Page = (props: Props) => {
                 return null;
             }
           })}
-          {/* <div className="flex justify-center items-center gap-4 country text-foreground">
-            <span>Select target country:</span>{" "}
-            <CountryDropdown disabled={loading} />{" "}
-            <span className="text-border">{"(optional)"}</span>
-          </div> */}
           <div className="flex justify-center items-center country m-10 text-foreground">
             <label
               htmlFor="input"
-              className="input font-semibold font-poppins text-lg text-foreground flex justify-start items-center mx-4"
+              className="input font-semibold font-poppins text-md text-foreground flex justify-start items-center mx-4"
             >
               Number of Responses :
             </label>
@@ -319,7 +314,7 @@ const Page = (props: Props) => {
               max={1000}
               step={50}
             />
-            <span className="text-lg">{`${responsesNeeded}`}</span>
+            <span className="text-md">{`${responsesNeeded}`}</span>
           </div>
           <button
             type="submit"
@@ -330,13 +325,13 @@ const Page = (props: Props) => {
                   toast({
                     title: "Invalid Form Data",
                     description: "Fill all the data completely",
-                    className: "bg-red-500 rounded-xl text-xl",
+                    className: "bg-red-500 rounded-xl text-md",
                     variant: "destructive",
                   });
                 }
               });
             }}
-            className="submit font-poppins text-foreground hover:scale-[120%] m-20 shadow-[inset_0_0_0_2px_#616467] text-black px-12 py-4 rounded-full tracking-widest uppercase font-bold bg-transparent hover:bg-[#616467] hover:text-white dark:text-neutral-200 transition duration-200"
+            className="submit font-poppins text-sm text-foreground hover:scale-[120%] m-20 shadow-[inset_0_0_0_2px_#616467] text-black px-8 py-3 rounded-full tracking-widest uppercase font-semibold bg-transparent hover:bg-[#616467] hover:text-white dark:text-neutral-200 transition duration-200"
           >
             {loading ? <Spinner /> : `Pay ${responsesNeeded / 1000} SOL`}
           </button>

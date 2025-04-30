@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "cross-env PORT=3000 next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "cross-env PORT=3000 next start",
     "lint": "next lint"
   },
   "dependencies": {
@@ -29,6 +29,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cmdk": "^0.2.0",
+    "cross-env": "^7.0.3",
     "date-fns": "^3.6.0",
     "framer-motion": "^11.11.8",
     "gsap": "^3.12.5",

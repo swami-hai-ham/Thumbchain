@@ -149,7 +149,7 @@ const TaskPage = () => {
       className="flex flex-col items-center p-6 h-full w-full text-foreground"
       ref={divRef}
     >
-      <h1 className="text-4xl font-bold font-montserrat my-10 title opacity-0">
+      <h1 className="text-2xl font-bold font-montserrat my-10 title opacity-0">
         {task?.title}
       </h1>
 
@@ -221,7 +221,7 @@ const TaskPage = () => {
           dark:text-neutral-200`}
         onClick={handleClick}
       >
-        {loading ? <Spinner /> : "Submit"}
+        {loading ? <Spinner /> : <span className="text-sm">{"Submit"}</span>}
       </button>
     </div>
   );

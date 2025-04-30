@@ -27,7 +27,7 @@ const Uinp = (props: Props) => {
                     {...field}
                     type="text"
                     placeholder="Question"
-                    className="text-foreground border-border placeholder:text-border !text-xl w-full h-full"
+                    className="text-foreground border-border placeholder:text-border text-md w-full h-full p-2"
                   />
                 )}
               />
@@ -41,7 +41,7 @@ const Uinp = (props: Props) => {
                   <Textarea
                     {...field}
                     placeholder="Sample Description"
-                    className="text-foreground border-border placeholder:text-border !text-xl w-full h-full"
+                    className="text-foreground border-border placeholder:text-border text-md w-full h-full"
                   />
                 )}
               />

@@ -69,7 +69,7 @@ const CustomConnectButton: React.FC = () => {
   return (
     <div className="connect">
       <button
-        className="font-bungee text-xl p-3 border-border border-2 rounded-xl hover:bg-popover"
+        className="font-bungee text-sm p-3 border-border border-2 rounded-xl hover:bg-popover"
         onClick={handleClick}
         disabled={connecting}
       >
@@ -80,7 +80,7 @@ const CustomConnectButton: React.FC = () => {
           : "Connect Wallet"}
       </button>
       <button
-        className="font-bungee text-xl p-3 border-border border-2 rounded-xl hover:bg-popover ml-2 sign"
+        className="font-bungee text-sm p-3 border-border border-2 rounded-xl hover:bg-popover ml-2 sign"
         onClick={handleSignIn}
         disabled={isSigningIn}
         hidden={

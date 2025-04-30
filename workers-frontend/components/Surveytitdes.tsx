@@ -82,11 +82,11 @@ const Surveytitdes = () => {
   return (
     <>
       <div className="flex p-5 px-10 flex-col gap-10 m-5 border-2 border-border">
-        <h1 className="text-3xl text-primary flex gap-5">
+        <h1 className="text-xl text-primary flex gap-5">
           <span>Survey Title:</span>{" "}
           <span className="text-foreground">{survey.title}</span>
         </h1>
-        <h2 className="text-3xl text-primary flex gap-5 flex-wrap">
+        <h2 className="text-lg text-primary flex gap-5 flex-wrap">
           <span>Description:</span>
           <span className="text-foreground break-words">
             {survey.description}

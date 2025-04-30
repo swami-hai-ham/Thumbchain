@@ -48,7 +48,7 @@ const Checkbox = (Ques: Question) => {
         <div className="flex justify-between items-center">
           <div className="flex justify-center items-center gap-5">
             <span className="text-2xl text-primary">Question:</span>{" "}
-            {Ques.question}
+            <span className="text-lg">{Ques.question}</span>
           </div>
           <span className="border-2 border-primary p-3">
             {formatQuestionType(Ques.type)}
@@ -64,11 +64,11 @@ const Checkbox = (Ques: Question) => {
                   value={op}
                   name={Ques.questionId}
                   onChange={handleOptionChange}
-                  className="w-4 h-4 rounded-full border border-foreground appearance-none checked:bg-accent checked:border-transparent focus:outline-none focus:ring-2 focus:ring-foreground"
+                  className="w-4 h-4 focus:ring-foreground dark:focus:ring-background focus:ring-2 checked:bg-accent appearance-none border-border border-2 checked:border-0"
                 />
                 <label
                   htmlFor={`${Ques.questionId}-option-${opIndex}`}
-                  className="ms-2 text-xl font-medium text-foreground dark:text-background flex justify-between w-full items-center"
+                  className="ms-2 text-lg font-medium text-foreground dark:text-background flex justify-between w-full items-center"
                 >
                   {op}
                 </label>

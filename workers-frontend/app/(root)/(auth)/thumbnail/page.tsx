@@ -90,7 +90,7 @@ const Page = () => {
         duration={5}
       >
         <h1
-          className="font-montserrat text-5xl font-semibold mb-10"
+          className="font-montserrat text-3xl font-semibold mb-10"
           ref={headingRef}
         >
           Rate Thumbnails

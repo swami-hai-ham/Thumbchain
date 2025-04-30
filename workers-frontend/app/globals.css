@@ -110,27 +110,15 @@
   }
 }
 
-.dots-pattern {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 35px;
-  background: radial-gradient(
-    circle at bottom,
-    rgba(0, 255, 133, 0.5) 0%,
-    rgba(0, 255, 0, 0) 20%
-  );
-  mask-image: radial-gradient(circle at bottom, black 40%, transparent 70%);
-  background-size: 10px 10px;
-  background-repeat: repeat;
-  opacity: 0;
-  transition: opacity 0.3s ease-in-out;
+input[type="checkbox"]:checked::before {
+  content: "✓";
+  color: white;
+  position: relative;
+  bottom: 25%;
+  left: 25%;
+  font-size: 0.75rem;
 }
 
-.h-24:hover .dots-pattern {
-  opacity: 1;
-}
 /* for date picker */
 .rdp-vhidden {
   @apply hidden;

@@ -67,7 +67,7 @@ const Page = (props: Props) => {
         title: e.code,
         variant: "destructive",
         description: "Internal Server Error",
-        className: "bg-red-500 rounded-xl text-xl",
+        className: "bg-red-500 rounded-xl text-lg",
       });
     }
   };
@@ -105,25 +105,25 @@ const Page = (props: Props) => {
       ref={thumbRef}
     >
       <ShineBorder
-        className="shine w-full flex justify-center items-center bg-background h-32 opacity-0"
+        className="shine w-full flex justify-center items-center bg-background h-24 opacity-0"
         color={["#4B0082", "#00BFFF", "#00FF7F"]}
         duration={5}
       >
-        <h1 className="font-maitree text-foreground text-3xl font-bold p-5 py-20 note">
+        <h1 className="font-maitree text-foreground text-lg font-bold p-5 py-20 note">
           Create Survey
         </h1>
         <Link
           href={"/survey/new"}
-          className="z-10 link font-maitree text-accent-foreground bg-primary p-5 ml-5 rounded-xl font-bold"
+          className="z-10 link font-maitree text-accent-foreground bg-primary p-3 ml-3 rounded-xl font-bold text-sm"
         >
           New Survey
         </Link>
       </ShineBorder>
       {loading ? (
         <div className="flex space-x-2 justify-center items-center bg-background absolute top-2/4">
-          <div className="h-8 w-8 bg-foreground rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-          <div className="h-8 w-8 bg-foreground rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-          <div className="h-8 w-8 bg-foreground rounded-full animate-bounce"></div>
+          <div className="size-4 bg-foreground rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+          <div className="size-4 bg-foreground rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+          <div className="size-4 bg-foreground rounded-full animate-bounce"></div>
         </div>
       ) : (
         data && <DataTable columns={columns} data={data} />

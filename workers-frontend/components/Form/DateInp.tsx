@@ -48,7 +48,7 @@ const DateInp = (Ques: Question) => {
         <div className="flex justify-between items-center">
           <div className="flex justify-center items-center gap-5">
             <span className="text-2xl text-primary">Question:</span>{" "}
-            {Ques.question}
+            <span className="text-lg">{Ques.question}</span>
           </div>
           <span className="border-2 border-primary p-3">
             {formatQuestionType(Ques.type)}

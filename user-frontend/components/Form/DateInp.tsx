@@ -33,7 +33,7 @@ const DateInp = (props: Props) => {
                     {...field}
                     type="text"
                     placeholder="Question"
-                    className="text-foreground border-border placeholder:text-border !text-xl w-full h-full"
+                    className="text-foreground border-border placeholder:text-border text-md w-full h-full p-2"
                   />
                 )}
               />
@@ -49,7 +49,11 @@ const DateInp = (props: Props) => {
                 )}
               >
                 <CalendarIcon className="w-[20px] h-[20px]" />
-                {date ? format(date, "PPP") : <span>Pick a date</span>}
+                {date ? (
+                  format(date, "PPP")
+                ) : (
+                  <span className="text-sm">Pick a date</span>
+                )}
               </Button>
             </PopoverTrigger>
             <PopoverContent align="start" className=" w-auto p-0">

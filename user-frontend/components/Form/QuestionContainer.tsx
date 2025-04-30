@@ -69,7 +69,7 @@ const QuestionContainer = ({ type, index }: Props) => {
     }
   };
   return (
-    <div className="w-full h-full p-8 flex justify-center items-center text-foreground border-border border-2 gap-4">
+    <div className="w-full h-full p-4 flex justify-center items-center text-foreground border-border border-2 gap-4">
       {renderQuestionComponent()}
       <div className="flex-[1] h-full border-border border-[1px] flex flex-col justify-center items-center">
         <div className="flex justify-around items-center border-b-[1px] h-full w-full border-border">
@@ -77,7 +77,7 @@ const QuestionContainer = ({ type, index }: Props) => {
             <TooltipTrigger asChild>
               <button
                 type="button"
-                className="p-2 active:scale-90 transition-transform duration-50 py-5"
+                className="p-2 active:scale-90 transition-transform duration-50"
                 onClick={() => {
                   append({
                     type: "multichoice",
@@ -154,7 +154,7 @@ const QuestionContainer = ({ type, index }: Props) => {
             />
             <label
               htmlFor={`radio-multichoice-${index}`}
-              className="ms-2 text-xl font-medium text-foreground dark:text-background"
+              className="ms-2 text-md font-medium text-foreground dark:text-background"
             >
               Multiple choice
             </label>
@@ -171,7 +171,7 @@ const QuestionContainer = ({ type, index }: Props) => {
             />
             <label
               htmlFor={`radio-checkbox-${index}`}
-              className="ms-2 text-xl font-medium text-foreground dark:text-background"
+              className="ms-2 text-md font-medium text-foreground dark:text-background"
             >
               Checkbox
             </label>
@@ -188,7 +188,7 @@ const QuestionContainer = ({ type, index }: Props) => {
             />
             <label
               htmlFor={`radio-user_input-${index}`}
-              className="ms-2 text-xl font-medium text-foreground dark:text-background"
+              className="ms-2 text-md font-medium text-foreground dark:text-background"
             >
               User Input
             </label>
@@ -205,7 +205,7 @@ const QuestionContainer = ({ type, index }: Props) => {
             />
             <label
               htmlFor={`radio-date-${index}`}
-              className="ms-2 text-xl font-medium text-foreground dark:text-background"
+              className="ms-2 text-md font-medium text-foreground dark:text-background"
             >
               Date
             </label>

@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
-} from "@tanstack/react-table"
+} from "@tanstack/react-table";
 
 import {
   Table,
@@ -14,11 +14,11 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 
 interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[]
-  data: TData[]
+  columns: ColumnDef<TData, TValue>[];
+  data: TData[];
 }
 
 export function DataTable<TData, TValue>({
@@ -29,17 +29,20 @@ export function DataTable<TData, TValue>({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-  })
+  });
 
   return (
     <div className="rounded-xl border-border border-2 text-foreground w-full h-full dataTable ">
-      <Table >
+      <Table>
         <TableHeader className="rounded-xl">
           {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id} className=" text-lg">
+            <TableRow key={headerGroup.id} className=" text-sm">
               {headerGroup.headers.map((header) => {
                 return (
-                  <TableHead key={header.id} className="border-border border-b-2 p-5 headerRef">
+                  <TableHead
+                    key={header.id}
+                    className="border-border border-b-2 p-2 headerRef"
+                  >
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -47,7 +50,7 @@ export function DataTable<TData, TValue>({
                           header.getContext()
                         )}
                   </TableHead>
-                )
+                );
               })}
             </TableRow>
           ))}
@@ -61,7 +64,10 @@ export function DataTable<TData, TValue>({
                 data-state={row.getIsSelected() && "selected"}
               >
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="border-border border-y-2 p-5">
+                  <TableCell
+                    key={cell.id}
+                    className="border-border border-y-2 p-3"
+                  >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
@@ -77,5 +83,5 @@ export function DataTable<TData, TValue>({
         </TableBody>
       </Table>
     </div>
-  )
+  );
 }

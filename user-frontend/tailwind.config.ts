@@ -1,31 +1,42 @@
-import type { Config } from "tailwindcss"
+import type { Config } from "tailwindcss";
 
 const config = {
   darkMode: ["class"],
   content: [
-    './pages/**/*.{ts,tsx}',
-    './components/**/*.{ts,tsx}',
-    './app/**/*.{ts,tsx}',
-    './src/**/*.{ts,tsx}',
-	],
+    "./pages/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./app/**/*.{ts,tsx}",
+    "./src/**/*.{ts,tsx}",
+  ],
   prefix: "",
   theme: {
     container: {
       center: true,
-      padding: "2rem",
       screens: {
         "2xl": "1400px",
       },
     },
     extend: {
+      fontSize: {
+        sm: "0.875rem",
+        base: "1rem",
+        lg: "1.125rem",
+        md: "1rem", // Custom text-md
+      },
+      borderRadius: {
+        sm: "0.125rem",
+        md: "0.375rem",
+        lg: "0.5rem",
+        xl: "0.75rem",
+      },
       fontFamily: {
-        montserrat: ['Montserrat', 'sans-serif'],
-        oswald: ['Oswald', 'sans-serif'],
-        poppins: ['Poppins', 'sans-serif'],
-        enriqueta: ['Enriqueta', 'sans-serif'],
-        maitree: ['Maitree', 'sans-serif'],
-        bungee: ['Bungee Spice', 'sans-serif'],
-        honk: ['Honk', 'sans-serif']
+        montserrat: ["Montserrat", "sans-serif"],
+        oswald: ["Oswald", "sans-serif"],
+        poppins: ["Poppins", "sans-serif"],
+        enriqueta: ["Enriqueta", "sans-serif"],
+        maitree: ["Maitree", "sans-serif"],
+        bungee: ["Bungee Spice", "sans-serif"],
+        honk: ["Honk", "sans-serif"],
       },
       colors: {
         border: "var(--border)",
@@ -62,11 +73,6 @@ const config = {
           foreground: "var(--card-foreground)",
         },
       },
-      borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
-      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
@@ -100,6 +106,6 @@ const config = {
     },
   },
   plugins: [require("tailwindcss-animate")],
-} satisfies Config
+} satisfies Config;
 
-export default config
+export default config;

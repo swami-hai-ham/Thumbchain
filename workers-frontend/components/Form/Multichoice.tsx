@@ -39,7 +39,7 @@ const Multichoice = (props: { Ques: Question }) => {
         <div className="flex justify-between items-center">
           <div className="flex justify-center items-center gap-5">
             <span className="text-2xl text-primary">Question:</span>{" "}
-            {Ques.question}
+            <span className="text-lg">{Ques.question}</span>
           </div>
           <span className="border-2 border-primary p-3">
             {formatQuestionType(Ques.type)}
@@ -59,7 +59,7 @@ const Multichoice = (props: { Ques: Question }) => {
                 />
                 <label
                   htmlFor={`${Ques.questionId}-option-${opIndex}`}
-                  className="ms-2 text-xl font-medium text-foreground dark:text-background flex justify-between w-full items-center"
+                  className="ms-2 text-lg font-medium text-foreground dark:text-background flex justify-between w-full items-center"
                 >
                   {op}
                 </label>
@@ -75,7 +75,7 @@ const Multichoice = (props: { Ques: Question }) => {
           <>
             <button
               disabled={!selectedOption}
-              className="rounded-2xl p-2 border-2 border-border w-32 mx-auto"
+              className="rounded-2xl text-lg p-2 border-2 border-border w-32 mx-auto"
               onClick={async () => {
                 setLoading(true);
                 console.log("recaptcha");

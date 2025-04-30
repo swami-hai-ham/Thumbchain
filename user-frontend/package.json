@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "cross-env PORT=3001 next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "cross-env PORT=3001 next start",
     "lint": "next lint"
   },
   "dependencies": {
@@ -33,6 +33,7 @@
     "cloudinary": "^2.4.0",
     "clsx": "^2.1.1",
     "cmdk": "^0.2.1",
+    "cross-env": "^7.0.3",
     "date-fns": "^3.6.0",
     "framer-motion": "^11.5.5",
     "gsap": "^3.12.5",

@@ -49,7 +49,7 @@ const Page = (props: Props) => {
     try {
       const response = await axios.get(`${BACKEND_LINK}/v1/user/task/bulk`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
       console.log(response);
@@ -65,8 +65,8 @@ const Page = (props: Props) => {
             task.country.slice(1).toLowerCase()
           : "None",
         redirectURL: `${WORKER_FRONTEND_LINK}/thumbnail/gettask?task=${encodeURIComponent(
-              JSON.stringify(task)
-            )}`
+          JSON.stringify(task)
+        )}`,
       }));
       setData(result);
       console.log(result);
@@ -113,25 +113,25 @@ const Page = (props: Props) => {
       ref={thumbRef}
     >
       <ShineBorder
-        className="shine w-full flex justify-center items-center bg-background h-32 opacity-0"
+        className="shine w-full flex justify-center items-center bg-background h-24 opacity-0"
         color={["#4B0082", "#00BFFF", "#00FF7F"]}
         duration={5}
       >
-        <h1 className="font-maitree text-foreground text-3xl font-bold p-5 py-20 note">
+        <h1 className="font-maitree text-foreground text-xl font-bold p-5 py-20 note">
           Upload Thumbnails to find out Click-Through-Rate
         </h1>
         <Link
           href={"/thumbnail/new"}
-          className="z-10 link font-maitree text-accent-foreground bg-primary p-5 ml-5 rounded-xl font-bold"
+          className="z-10 link font-maitree text-accent-foreground bg-primary p-5 ml-5 rounded-xl font-bold text-sm"
         >
           Upload
         </Link>
       </ShineBorder>
       {loading ? (
         <div className="flex space-x-2 justify-center items-center bg-background absolute top-2/4">
-          <div className="h-8 w-8 bg-foreground rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-          <div className="h-8 w-8 bg-foreground rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-          <div className="h-8 w-8 bg-foreground rounded-full animate-bounce"></div>
+          <div className="h-4 w-4 bg-foreground rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+          <div className="h-4 w-4 bg-foreground rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+          <div className="h-4 w-4 bg-foreground rounded-full animate-bounce"></div>
         </div>
       ) : (
         data && <DataTable columns={columns} data={data} />

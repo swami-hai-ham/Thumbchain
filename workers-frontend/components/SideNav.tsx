@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import Link from "next/link";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -8,9 +8,8 @@ import axios from "axios";
 import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { usePendingAmt } from "@/store/dropdown";
-type Props = {};
 
-const SideNav = (props: Props) => {
+const SideNav = () => {
   const { toast } = useToast();
   const navRef = useRef<HTMLDivElement | null>(null);
   const BACKEND_LINK = process.env.NEXT_PUBLIC_BACKEND_LINK;
@@ -95,50 +94,52 @@ const SideNav = (props: Props) => {
         className="flex justify-center items-center gap-6 sideNavLink opacity-0"
       >
         <img src="/home-line.svg" alt="" />
-        <span className="text-foreground font-poppins text-xl">Home</span>
+        <span className="text-foreground font-poppins text-md">Home</span>
       </Link>
       <Link
         href={"/thumbnail"}
         className="flex justify-center items-center gap-6 sideNavLink opacity-0"
       >
         <img src="/youtube-fill.svg" alt="" />
-        <span className="text-foreground font-poppins text-xl">Thumbnail</span>
+        <span className="text-foreground font-poppins text-md">Thumbnail</span>
       </Link>
       <Link
         href={"/surveys"}
         className="flex justify-center items-center gap-6 sideNavLink opacity-0"
       >
         <img src="/check-fill.svg" alt="" />
-        <span className="text-foreground font-poppins text-xl">Surveys</span>
+        <span className="text-foreground font-poppins text-md">Surveys</span>
       </Link>
       <Link
         href={"/payouts"}
         className="flex justify-center items-center gap-6 sideNavLink opacity-0"
       >
         <img src="/btc-fill.svg" alt="" />
-        <span className="text-foreground font-poppins text-xl">Payouts</span>
+        <span className="text-foreground font-poppins text-md">Payouts</span>
       </Link>
       <div className="flex justify-center items-start w-3/4 flex-col gap-3">
         {amount == 0 ? (
-          <div className="text-xl text-foreground balance">
-            <span className="mr-2">Pending Balance:</span>{" "}
-            <span className="text-foreground text-xl font-bungee">0</span>
+          <div className="balance">
+            <span className="mr-2 text-md text-foreground">
+              Pending Balance:
+            </span>{" "}
+            <span className="text-foreground text-md font-bungee">0</span>
           </div>
         ) : (
-          <div className="text-xl text-foreground balance">
+          <div className="text-md text-foreground balance">
             <span className="mr-2">Pending Balance:</span>
             <NumberTicker
               value={amount / 1000000}
               decimalPlaces={3}
               delay={1}
-              className="text-foreground text-xl font-bungee balance"
+              className="text-foreground text-md font-bungee balance"
             />
           </div>
         )}
       </div>
       <Button
         variant="secondary"
-        className="text-xl rounded-xl text-bg font-montserrat p-4 py-5 hover:text-foreground hover:bg-primary payout"
+        className="text-md rounded-xl text-bg font-montserrat p-4 py-5 hover:text-foreground hover:bg-primary payout"
         onClick={handleWithDraw}
       >
         Withdraw

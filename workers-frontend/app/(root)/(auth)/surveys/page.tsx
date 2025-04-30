@@ -6,7 +6,7 @@ const page = () => {
     <div className="flex justify-center items-center h-screen w-full">
       <Link
         href={"/surveys/response"}
-        className="p-4 font-poppins text-foreground bg-primary rounded-xl"
+        className="p-4 font-poppins text-foreground text-md bg-primary rounded-xl"
       >
         Start Survey
       </Link>

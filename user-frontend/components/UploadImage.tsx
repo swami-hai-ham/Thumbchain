@@ -104,7 +104,7 @@ const UploadImage: React.FC = () => {
         title: "Please give appropriate input",
         variant: "destructive",
         description: "Upload more than 1 image & give title to your task",
-        className: "bg-red-500 rounded-xl text-xl",
+        className: "bg-red-500 rounded-xl text-sm",
       });
     } else {
       setLoading(true);
@@ -136,7 +136,7 @@ const UploadImage: React.FC = () => {
           toast({
             title: "Transaction Denied",
             description: "You rejected the transaction request.",
-            className: "bg-yellow-500 rounded-xl text-xl",
+            className: "bg-yellow-500 rounded-xl text-sm",
           });
           setLoading(false);
         } else {
@@ -144,7 +144,7 @@ const UploadImage: React.FC = () => {
             title: "Transaction Error",
             description: e?.message || "An unexpected error occurred.",
             variant: "destructive",
-            className: "bg-red-500 rounded-xl text-xl",
+            className: "bg-red-500 rounded-xl text-sm",
           });
         }
         setLoading(false);
@@ -193,7 +193,7 @@ const UploadImage: React.FC = () => {
       toast({
         title: "Transaction successful",
         description: `Signature: ${signature}`,
-        className: "bg-green-500 rounded-xl text-xl",
+        className: "bg-green-500 rounded-xl text-sm",
         duration: 3000,
       });
       setLoading(false);
@@ -210,7 +210,7 @@ const UploadImage: React.FC = () => {
           title: e.code || "Error",
           variant: "destructive",
           description: e.message || "An error occurred",
-          className: "bg-red-500 rounded-xl text-xl",
+          className: "bg-red-500 rounded-xl text-sm",
         });
         setLoading(false);
         console.log(e);
@@ -269,13 +269,13 @@ const UploadImage: React.FC = () => {
     >
       <label
         htmlFor="input"
-        className="opacity-0 input font-semibold font-poppins text-3xl text-foreground w-3/4 mt-10 flex justify-start items-center"
+        className="opacity-0 input font-poppins text-2xl text-foreground w-3/4 mt-5 flex justify-start items-center"
       >
         Title
       </label>
       <input
         type="text"
-        className="opacity-0 input bg-input w-3/4 h-20 m-10 p-10 text-2xl font-semibold font-poppins text-foreground"
+        className="opacity-0 input bg-input w-3/4 h-10 m-5 p-8 text-lg font-poppins text-foreground"
         onChange={(e) => {
           setTitle(e.target.value);
         }}
@@ -285,11 +285,11 @@ const UploadImage: React.FC = () => {
       <div className="h-screen w-full flex flex-col justify-start items-center">
         <div className="relative w-3/4 h-1/2 border-border border-2 m-10 flex flex-col p-8 upload opacity-0">
           <div className="flex w-full justify-between items-center">
-            <h3 className="text-3xl text-foreground font-poppins font-bold mx-2 my-10">
+            <h3 className="text-2xl text-foreground font-poppins mx-2 my-5">
               Upload Images
             </h3>
             <button
-              className="flex justify-center items-center text-foreground text-lg gap-2"
+              className="flex justify-center items-center text-foreground text-sm gap-2"
               onClick={() => {
                 setDisabled(false);
                 setUploadedImages([]);
@@ -335,7 +335,7 @@ const UploadImage: React.FC = () => {
                 {({ open }) => (
                   <button
                     onClick={() => open()}
-                    className={`h-full w-full flex justify-center items-center text-white rounded-md ${
+                    className={`h-full w-full flex justify-center items-center text-white rounded-md p-6 ${
                       disabled ? "cursor-not-allowed bg-muted" : ""
                     }`}
                     disabled={disabled}
@@ -346,7 +346,7 @@ const UploadImage: React.FC = () => {
                       viewBox="0 0 24 24"
                       strokeWidth="1.5"
                       stroke="currentColor"
-                      className="size-10 text-foreground"
+                      className="size-6 text-foreground"
                     >
                       <path
                         strokeLinecap="round"
@@ -359,7 +359,7 @@ const UploadImage: React.FC = () => {
               </CldUploadWidget>
             </div>
           </div>
-          <div className="flex w-full h-10 justify-between items-center text-border font-semibold uppercase text-lg px-2">
+          <div className="flex w-full h-10 justify-between items-center text-border uppercase text-sm px-2">
             <span>Supported Formats: jpg, png, gif, jpeg, webp, bmp, svg</span>
             <span className="flex justify-center items-center">
               maxfiles: 10
@@ -375,7 +375,7 @@ const UploadImage: React.FC = () => {
           <div className="flex justify-center items-center country opacity-0 m-10">
             <label
               htmlFor="input"
-              className="opacity-0 input font-semibold font-poppins text-lg text-foreground flex justify-start items-center mx-4"
+              className="opacity-0 input font-poppins text-sm text-foreground flex justify-start items-center mx-4"
             >
               Number of Responses :
             </label>
@@ -423,7 +423,7 @@ const UploadImage: React.FC = () => {
         hidden={!disabled}
         disabled={loading}
         onClick={makePaymentandSubmitTask}
-        className="opacity-0 submit mt-56 font-poppins text-foreground hover:scale-[120%] m-20 shadow-[inset_0_0_0_2px_#616467] text-black px-12 py-4 rounded-full tracking-widest uppercase font-bold bg-transparent hover:bg-[#616467] hover:text-white dark:text-neutral-200 transition duration-200"
+        className="opacity-0 submit mt-56 font-poppins text-foreground text-sm hover:scale-[120%] m-20 shadow-[inset_0_0_0_2px_#616467] px-12 py-4 rounded-full tracking-widest uppercase font-semibold bg-transparent hover:bg-[#616467] hover:text-white dark:text-neutral-200 transition duration-200"
       >
         {loading ? <Spinner /> : `Pay ${responsesNeeded / 1000} SOL`}
       </button>
