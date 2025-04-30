@@ -1,4 +1,0 @@
-- handle requests with captcha here also
-- create functionality on user frontend to make the results of survey export
-- make tasks table
-- then done with project
