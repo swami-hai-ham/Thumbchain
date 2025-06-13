@@ -177,7 +177,7 @@ const Page = (props: Props) => {
         duration: 3000,
       });
       setLoading(false);
-      router.push(`/tasks`);
+      router.push(`/survey`);
     } catch (e: any) {
       toast({
         title: e.code,
