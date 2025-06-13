@@ -46,7 +46,7 @@ const NavBar = () => {
     >
       <Link
         href={"/"}
-        className="font-honk text-3xl p-3 px-10"
+        className="font-honk text-3xl p-3 px-10 cursor-none"
         onMouseEnter={() => {
           setHover(true);
         }}
